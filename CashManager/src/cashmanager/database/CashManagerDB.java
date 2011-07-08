@@ -5,10 +5,111 @@
 
 package cashmanager.database;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+
 /**
  *
- * @author Admin
+ * @author Alan Bertoni
  */
 public class CashManagerDB {
 
-}
+    private static final String driver = "org.apache.derby.jdbc.EmbeddedDriver";
+    private static final String database = "cashManagerDB";
+    private static final String connectionURL = "jdbc:derby:" + database + ";create=true";
+    private static final String user = "admin";
+    private static final String password = "admin";
+
+    protected static Connection getConnection(){
+        Connection c = null;
+        try{
+            Class.forName(driver);
+        }catch(ClassNotFoundException classNotFoundEx){
+            System.err.print("ClassNotFoundException ");
+            System.err.println(classNotFoundEx.getMessage());
+            classNotFoundEx.printStackTrace();
+            System.err.println("\n    >>> Please check your CLASSPATH variable   <<<\n");
+        }
+        try{
+            c = DriverManager.getConnection(connectionURL, user, password);
+            System.out.println("Connected to database " + database);
+        }catch(SQLException ex){
+           System.err.println("SQLException thrown in class" + CashManagerDB.class.getName());
+           System.err.println(ex.getMessage());
+           ex.printStackTrace();
+        }
+        return c;
+    }//getConnection
+
+    protected static boolean check4Table(Connection conn, String update) throws SQLException {
+      try {
+         Statement s = conn.createStatement();
+         s.execute(update);
+      }  catch (SQLException sqle) {
+         String theError = (sqle).getSQLState();
+         //   System.out.println("  Utils GOT:  " + theError);
+         /** If table exists will get -  WARNING 02000: No row was found **/
+         if(theError.equals("42X05")){  // Table does not exist
+             return false;
+          } else if(theError.equals("42X14") || theError.equals("42821")){
+             System.out.println("check4Table: Incorrect table definition.");
+             throw sqle;
+          } else {
+             System.out.println("check4Table: Unhandled SQLException" );
+             throw sqle;
+          }
+      }
+      //  System.out.println("Just got the warning - table exists OK ");
+      return true;
+   }//check4Table
+
+    public static void createTable(String checkTab, String createTab){
+        Connection conn = getConnection();
+        Statement s;
+        try {
+            if(!check4Table(conn, checkTab)){
+                s = conn.createStatement();
+                s.execute(createTab);
+            }
+        } catch (SQLException ex) {
+            System.err.println("SQLException thrown in class" + CashManagerDB.class.getName());
+            System.err.println(ex.getMessage());
+            ex.printStackTrace();
+        }
+    }//createTable
+
+    protected static void disconnect(Connection conn){
+        try{
+            conn.close();
+        }catch(SQLException ex){
+            System.err.println("SQLException thrown in class" + CashManagerDB.class.getName());
+            System.err.println(ex.getMessage());
+            ex.printStackTrace();
+        }
+    }//disconnect
+
+    protected static void shutdown(){
+        //   ## DATABASE SHUTDOWN SECTION ##
+        /*** In embedded mode, an application should shut down Derby.
+        Shutdown throws the XJ015 exception to confirm success. ***/
+        if(driver.equals("org.apache.derby.jdbc.EmbeddedDriver")){
+            boolean gotSQLExc = false;
+            try{
+                DriverManager.getConnection("jdbc:derby:;shutdown=true");
+            }catch (SQLException se){
+                if(se.getSQLState().equals("XJ015")){
+                    gotSQLExc = true;
+                }
+            }
+            if(!gotSQLExc){
+                System.out.println("Database did not shut down normally");
+            }else{
+                System.out.println("Database shut down normally");
+            }
+        }
+    }//shutdown
+
+
+}//CashManagerDB

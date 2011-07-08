@@ -30,16 +30,16 @@ public class Transaction extends CashManagerDB{
     private Calendar transactionDate;
     private String description;
 
-    private static final String createTab = "create table transaction " +
+    private static final String createTab = "create table transactions " +
             "(idtrans bigint not null generated always as identity primary key, " +
             "causal varchar(150) not null unique, " +
             "ammount int not null, " +
             "transaction_date date not null, " +
             "description varchar(500))";
-    private static final String checkTab = "update table transaction " +
+    private static final String checkTab = "update transactions " +
             "set description='test' " +
             "where 1=2";
-    private static final String insertInto = "insert into transaction" +
+    private static final String insertInto = "insert into transactions" +
                     "(causal, ammount, transaction_date, description) " +
                     "values (?, ?, ?, ?)";
 
@@ -119,13 +119,13 @@ public class Transaction extends CashManagerDB{
         ArrayList<Transaction> arr = new ArrayList<Transaction>();
         try{
             s = conn.createStatement();
-            rs = s.executeQuery("select * from transaction");
+            rs = s.executeQuery("select * from transactions");
             while(rs.next()){
                 Calendar c = Calendar.getInstance();
                 Transaction temp = new Transaction();
                 temp.setIdTrans(rs.getLong("idtrans"));
                 temp.setCausal(rs.getString("causal"));
-                temp.setAmmount(rs.getInt("amount"));
+                temp.setAmmount(rs.getInt("ammount"));
                 c.setTimeInMillis(rs.getDate("transaction_date").getTime());
                 temp.setTransactionDate(c);
                 temp.setDescription(rs.getString("description"));
@@ -147,7 +147,7 @@ public class Transaction extends CashManagerDB{
 
     public static void main(String args[]){
         Transaction.createTable(checkTab, createTab);
-        System.out.println("Insert a new transaction or exit to quit.");
+        System.out.println("Insert a new transaction causal or exit to quit.");
         Scanner s = new Scanner(System.in);
         Transaction t = new Transaction();
         while(!s.nextLine().equals("exit")){
@@ -156,11 +156,12 @@ public class Transaction extends CashManagerDB{
             System.out.print("Insert transaction ammount: ");
             t.setAmmount(s.nextInt());
             System.out.print("Insert transaction description: ");
-            t.setDescription(s.nextLine());
             t.setTransactionDate(Calendar.getInstance());
+            t.setDescription(s.nextLine());
+            
             Transaction.insertTransaction(t);
 
-            System.out.println("Insert a new transaction or exit to quit.");
+            //System.out.println("Insert a new transaction or exit to quit.");
         }
         System.out.println("Done inserting.");
         Transaction.printTransactionList(Transaction.getAllTransaction());

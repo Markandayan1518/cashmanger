@@ -34,7 +34,7 @@ public class CashManagerDB {
         }
         try{
             c = DriverManager.getConnection(connectionURL, user, password);
-            System.out.println("Connected to database " + database);
+            //System.out.println("Connected to database " + database);
         }catch(SQLException ex){
            System.err.println("SQLException thrown in class" + CashManagerDB.class.getName());
            System.err.println(ex.getMessage());
@@ -44,8 +44,9 @@ public class CashManagerDB {
     }//getConnection
 
     protected static boolean check4Table(Connection conn, String update) throws SQLException {
+      Statement s = null;
       try {
-         Statement s = conn.createStatement();
+         s = conn.createStatement();
          s.execute(update);
       }  catch (SQLException sqle) {
          String theError = (sqle).getSQLState();
@@ -60,6 +61,9 @@ public class CashManagerDB {
              System.out.println("check4Table: Unhandled SQLException" );
              throw sqle;
           }
+      }finally{
+          if(s != null)
+              s.close();
       }
       //  System.out.println("Just got the warning - table exists OK ");
       return true;
@@ -67,16 +71,28 @@ public class CashManagerDB {
 
     public static void createTable(String checkTab, String createTab){
         Connection conn = getConnection();
-        Statement s;
+        Statement s = null;
         try {
             if(!check4Table(conn, checkTab)){
                 s = conn.createStatement();
-                s.execute(createTab);
+                s.executeUpdate(createTab);
             }
         } catch (SQLException ex) {
             System.err.println("SQLException thrown in class" + CashManagerDB.class.getName());
             System.err.println(ex.getMessage());
             ex.printStackTrace();
+        }finally{
+            try{
+                if(s != null){
+                    s.close();
+                }
+                disconnect(conn);
+                System.err.println("Disconnected in createTable.");
+            }catch(SQLException ex){
+                System.err.println("SQLException thrown in class" + CashManagerDB.class.getName());
+                System.err.println(ex.getMessage());
+                ex.printStackTrace();
+            }
         }
     }//createTable
 

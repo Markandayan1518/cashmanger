@@ -33,7 +33,7 @@ public class CashManagerDB {
             System.err.println("\n    >>> Please check your CLASSPATH variable   <<<\n");
         }
         try{
-            c = DriverManager.getConnection(connectionURL, user, password);
+            c = DriverManager.getConnection(connectionURL);
             //System.out.println("Connected to database " + database);
         }catch(SQLException ex){
            System.err.println("SQLException thrown in class" + CashManagerDB.class.getName());

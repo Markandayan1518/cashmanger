@@ -24,16 +24,18 @@ public class Transaction extends CashManagerDB{
 
     private long idTrans;
     private String causal;
-    private int ammount;
+    private double ammount;
     private Calendar transactionDate;
     private String description;
 
     private static final String createTab = "create table transactions " +
             "(idtrans bigint not null generated always as identity primary key, " +
             "causal varchar(150) not null , " +
-            "ammount int not null, " +
+            "ammount double not null, " +
             "transaction_date date not null, " +
             "description varchar(500))";
+    private static final String deleteTab = "delete from transactions";
+    private static final String dropTable = "drop table transactions";
     private static final String checkTab = "update transactions " +
             "set description='test' " +
             "where 1=2";
@@ -48,7 +50,7 @@ public class Transaction extends CashManagerDB{
     public void setCausal(String caus){
         causal = caus;
     }
-    public void setAmmount(int amm){
+    public void setAmmount(double amm){
         ammount = amm;
     }
     public void setTransactionDate(Calendar date){
@@ -66,7 +68,7 @@ public class Transaction extends CashManagerDB{
     public String getCausal(){
         return causal;
     }
-    public int getAmmount(){
+    public double getAmmount(){
         return ammount;
     }
     public Calendar getTransactionDate(){
@@ -79,7 +81,7 @@ public class Transaction extends CashManagerDB{
 
     @Override
     public String toString(){
-        return String.format("Transaction [id=%d, causal=%s, ammount=%d, date=%s, description=%s] ",
+        return String.format("Transaction [id=%d, causal=%s, ammount=%f, date=%s, description=%s] ",
                 getIdTrans(), getCausal(), getAmmount(), "date", getDescription());
     }
 
@@ -100,7 +102,7 @@ public class Transaction extends CashManagerDB{
         try {
             PreparedStatement ps = conn.prepareStatement(ins);
             ps.setString(1, trans.getCausal());
-            ps.setInt(2, trans.getAmmount());
+            ps.setDouble(2, trans.getAmmount());
             ps.setDate(3, new Date(trans.getTransactionDate().getTimeInMillis()));
             ps.setString(4, trans.getDescription());
             ps.executeUpdate();
@@ -127,7 +129,7 @@ public class Transaction extends CashManagerDB{
             for(Transaction trans : list){
                 ps.setString(index, trans.getCausal());
                 index++;
-                ps.setInt(index, trans.getAmmount());
+                ps.setDouble(index, trans.getAmmount());
                 index++;
                 ps.setDate(index, new Date(trans.getTransactionDate().getTimeInMillis()));
                 index++;
@@ -159,7 +161,7 @@ public class Transaction extends CashManagerDB{
                 Transaction temp = new Transaction();
                 temp.setIdTrans(rs.getLong("idtrans"));
                 temp.setCausal(rs.getString("causal"));
-                temp.setAmmount(rs.getInt("ammount"));
+                temp.setAmmount(rs.getDouble("ammount"));
                 c.setTimeInMillis(rs.getDate("transaction_date").getTime());
                 temp.setTransactionDate(c);
                 temp.setDescription(rs.getString("description"));
@@ -201,6 +203,9 @@ public class Transaction extends CashManagerDB{
 
 
     public static void main(String args[]){
+
+        Transaction.deleteTable(checkTab, deleteTab);
+        Transaction.dropTable(checkTab, dropTable);
         Transaction.createTable(checkTab, createTab);
         System.out.println("Insert a new transaction causal or exit to quit.");
         Scanner s = new Scanner(System.in);
@@ -211,7 +216,7 @@ public class Transaction extends CashManagerDB{
             System.out.print("Insert transaction description: ");
             t.setDescription(s.nextLine());
             System.out.print("Insert transaction ammount: ");
-            t.setAmmount(Integer.parseInt(s.nextLine()));
+            t.setAmmount(Double.parseDouble(s.nextLine()));
             t.setTransactionDate(Calendar.getInstance());
 
             Transaction.insertTransaction(t);

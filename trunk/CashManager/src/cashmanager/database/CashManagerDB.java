@@ -43,6 +43,37 @@ public class CashManagerDB {
         return c;
     }//getConnection
 
+    protected static void disconnect(Connection conn){
+        try{
+            conn.close();
+        }catch(SQLException ex){
+            System.err.println("SQLException thrown in class" + CashManagerDB.class.getName());
+            System.err.println(ex.getMessage());
+            ex.printStackTrace();
+        }
+    }//disconnect
+
+    protected static void shutdown(){
+        //   ## DATABASE SHUTDOWN SECTION ##
+        /*** In embedded mode, an application should shut down Derby.
+        Shutdown throws the XJ015 exception to confirm success. ***/
+        if(driver.equals("org.apache.derby.jdbc.EmbeddedDriver")){
+            boolean gotSQLExc = false;
+            try{
+                DriverManager.getConnection("jdbc:derby:;shutdown=true");
+            }catch (SQLException se){
+                if(se.getSQLState().equals("XJ015")){
+                    gotSQLExc = true;
+                }
+            }
+            if(!gotSQLExc){
+                System.out.println("Database did not shut down normally");
+            }else{
+                System.out.println("Database shut down normally");
+            }
+        }
+    }//shutdown
+
     protected static boolean check4Table(Connection conn, String update) throws SQLException {
       Statement s = null;
       try {
@@ -96,36 +127,57 @@ public class CashManagerDB {
         }
     }//createTable
 
-    protected static void disconnect(Connection conn){
-        try{
-            conn.close();
-        }catch(SQLException ex){
+    public static void deleteTable(String checkTab, String deleteTab){
+        Connection conn = getConnection();
+        Statement s = null;
+        try {
+            if(check4Table(conn, checkTab)){
+                s = conn.createStatement();
+                s.executeUpdate(deleteTab);
+            }
+        } catch (SQLException ex) {
             System.err.println("SQLException thrown in class" + CashManagerDB.class.getName());
             System.err.println(ex.getMessage());
             ex.printStackTrace();
-        }
-    }//disconnect
-
-    protected static void shutdown(){
-        //   ## DATABASE SHUTDOWN SECTION ##
-        /*** In embedded mode, an application should shut down Derby.
-        Shutdown throws the XJ015 exception to confirm success. ***/
-        if(driver.equals("org.apache.derby.jdbc.EmbeddedDriver")){
-            boolean gotSQLExc = false;
+        }finally{
             try{
-                DriverManager.getConnection("jdbc:derby:;shutdown=true");
-            }catch (SQLException se){
-                if(se.getSQLState().equals("XJ015")){
-                    gotSQLExc = true;
+                if(s != null){
+                    s.close();
                 }
-            }
-            if(!gotSQLExc){
-                System.out.println("Database did not shut down normally");
-            }else{
-                System.out.println("Database shut down normally");
+                disconnect(conn);
+                System.err.println("Disconnected in deleteTable.");
+            }catch(SQLException ex){
+                System.err.println("SQLException thrown in class" + CashManagerDB.class.getName());
+                System.err.println(ex.getMessage());
+                ex.printStackTrace();
             }
         }
-    }//shutdown
+    }//deleteTable
 
-
+    public static void dropTable(String checkTab, String dropTab){
+        Connection conn = getConnection();
+        Statement s = null;
+        try {
+            if(check4Table(conn, checkTab)){
+                s = conn.createStatement();
+                s.executeUpdate(dropTab);
+            }
+        } catch (SQLException ex) {
+            System.err.println("SQLException thrown in class" + CashManagerDB.class.getName());
+            System.err.println(ex.getMessage());
+            ex.printStackTrace();
+        }finally{
+            try{
+                if(s != null){
+                    s.close();
+                }
+                disconnect(conn);
+                System.err.println("Disconnected in dropTable.");
+            }catch(SQLException ex){
+                System.err.println("SQLException thrown in class" + CashManagerDB.class.getName());
+                System.err.println(ex.getMessage());
+                ex.printStackTrace();
+            }
+        }
+    }//dropTable
 }//CashManagerDB

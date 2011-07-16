@@ -116,6 +116,13 @@ public class JYearChooser extends JPanel implements FocusListener, CaretListener
         }
     }
 
+    public JSpinner getSpinner(){
+        return spinner;
+    }
+    public int getCurrentValue(){
+        return currentValue;
+    }
+
     public void printInfo(){
         System.out.println(spinner.getPreferredSize());
         System.out.println(spinner.getMinimumSize());

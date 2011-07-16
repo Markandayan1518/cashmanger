@@ -95,6 +95,11 @@ public class JMonthChooser extends JPanel implements ItemListener{
     public Locale getLocale(){
         return locale;
     }
+    public JComboBox getMonthBox(){
+        if(initialized || !localeInitialize)
+            return monthBox;
+        return null;
+    }
 
     public void itemStateChanged(ItemEvent e){
         if(e.getStateChange() == ItemEvent.SELECTED){

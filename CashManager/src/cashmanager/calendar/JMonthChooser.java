@@ -6,15 +6,13 @@
 package cashmanager.calendar;
 
 import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.Font;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.text.DateFormatSymbols;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Locale;
-import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -41,7 +39,8 @@ public class JMonthChooser extends JPanel implements ItemListener{
         add(monthBox, BorderLayout.CENTER);
         initialized = true;
         Calendar c = Calendar.getInstance(locale);
-        setMonth(c.get(Calendar.MONTH));
+        setMonth(c.get(Calendar.MONTH), true, false);
+//        setNewFont(new Font(Font.DIALOG, Font.PLAIN, 10));
     }
 
     private final void initMonth(){
@@ -60,9 +59,9 @@ public class JMonthChooser extends JPanel implements ItemListener{
     }
 
     public void setMonth(int newMonth){
-        setMonth(newMonth, true);
+        setMonth(newMonth, true, true);
     }
-    private void setMonth(int newMonth, boolean updateSelection){
+    private void setMonth(int newMonth, boolean updateSelection, boolean firePropertyEvent){
         if(!initialized || localeInitialize){
             return;
         }
@@ -80,32 +79,34 @@ public class JMonthChooser extends JPanel implements ItemListener{
         if(updateSelection){
             monthBox.setSelectedIndex(currentMonth);
         }
-
-        firePropertyChange("month", oldMonth, currentMonth);
+        if(firePropertyEvent){
+            firePropertyChange("month", oldMonth, currentMonth);
+        }
     }
-    public void setLocale(Locale l){
-//        super.setLocale(l);
-        locale = l;
-        initMonth();
-    }
-
     public int getMonth(){
         return currentMonth;
+    }
+    public void setLocale(Locale l){
+        super.setLocale(l);
+        locale = l;
+        initMonth();
     }
     public Locale getLocale(){
         return locale;
     }
     public JComboBox getMonthBox(){
-        if(initialized || !localeInitialize)
-            return monthBox;
-        return null;
+        return monthBox;
+    }
+    public void setNewFont(Font font){
+        super.setFont(font);
+        monthBox.setFont(font);
     }
 
     public void itemStateChanged(ItemEvent e){
         if(e.getStateChange() == ItemEvent.SELECTED){
             int index = monthBox.getSelectedIndex();
             if((index >= 0) && (index != currentMonth)){
-                setMonth(index, false);
+                setMonth(index, false, true);
             }
         }
     }
@@ -123,9 +124,6 @@ public class JMonthChooser extends JPanel implements ItemListener{
         }
         Arrays.sort(a);
         final JComboBox b = new JComboBox();
-//        for(Locale l : list){
-//            b.addItem(l.getDisplayName());
-//        }
         for(String s : a){
             b.addItem(s);
         }

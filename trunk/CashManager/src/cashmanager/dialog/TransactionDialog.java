@@ -5,6 +5,7 @@
 
 package cashmanager.dialog;
 
+import cashmanager.calendar.JDateChooser;
 import java.awt.Window;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -14,12 +15,10 @@ import javax.swing.JTextField;
 
 import cashmanager.database.Transaction;
 import java.awt.BorderLayout;
-import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Calendar;
 import java.util.List;
-import javax.swing.Box;
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -38,7 +37,7 @@ public class TransactionDialog extends JDialog{
     private JLabel ammountLabel;
     private JTextField ammountField;
     private JLabel dateLabel;
-    private JTextField dateField;
+    private JDateChooser dateField;
     private JLabel descriptionLabel;
     private JTextArea descriptionArea;
     private JScrollPane descPane;
@@ -80,7 +79,7 @@ public class TransactionDialog extends JDialog{
         ammountField = new JTextField(15);
         dateLabel = new JLabel("Transaction Date:");
         dateLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-        dateField = new JTextField(15);
+        dateField = new JDateChooser();
         descriptionLabel = new JLabel("Description:");
         descriptionLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         descriptionArea = new JTextArea(5, 15);
@@ -128,8 +127,7 @@ public class TransactionDialog extends JDialog{
                 Transaction trans = new Transaction();
                 trans.setCausal((String)causalBox.getSelectedItem());
                 trans.setAmmount(Double.parseDouble(ammountField.getText()));
-                Calendar c = Calendar.getInstance();
-                trans.setTransactionDate(c);
+                trans.setTransactionDate(dateField.getCalendar());
                 trans.setDescription(descriptionArea.getText());
 
                 Transaction.insertTransaction(trans);

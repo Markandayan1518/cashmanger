@@ -7,6 +7,7 @@ package cashmanager.calendar;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -58,14 +59,14 @@ public class JYearChooser extends JPanel implements FocusListener, CaretListener
 
         textField = new JTextField();
         textField.setHorizontalAlignment(SwingConstants.TRAILING);
-        setValue(defaultValue);
+        setValue(defaultValue, true, true, false);
         textField.addActionListener(this);
         textField.addFocusListener(this);
         textField.addCaretListener(this);
         spinner.setEditor(textField);
         add(spinner, BorderLayout.CENTER);
+//        setNewFont(new Font(Font.DIALOG, Font.PLAIN, 10));
 
-        printInfo();
     }
 
     public final void setMinValue(int min){
@@ -75,12 +76,18 @@ public class JYearChooser extends JPanel implements FocusListener, CaretListener
             minValue = min;
         }
     }
+    public int getMinValue(){
+        return minValue;
+    }
     public final void setMaxValue(int max){
         if(max < minValue){
             maxValue = minValue;
         }else{
             maxValue = max;
         }
+    }
+    public int getMaxValue(){
+        return maxValue;
     }
     public final void setDefaultValue(int defValue){
         if(defValue < minValue){
@@ -91,6 +98,9 @@ public class JYearChooser extends JPanel implements FocusListener, CaretListener
             defaultValue = defValue;
         }
     }
+    public int getDefaultValue(){
+        return defaultValue;
+    }
     public final void setCurrentValue(int currValue){
         if(currValue < minValue){
             currentValue = minValue;
@@ -100,51 +110,78 @@ public class JYearChooser extends JPanel implements FocusListener, CaretListener
             currentValue = currValue;
         }
     }
-
-    public void setValue(int value){
-        setValue(value, true);
-        spinner.setValue(value);
-        System.out.println((Integer)spinner.getValue());
+    public int getCurrentValue(){
+        return currentValue;
     }
-    public void setValue(int value, boolean updateTextField){
+    public void setValue(int value){
+        System.out.println("SetValue start");
+        setValue(value, true, true, true);
+        System.out.println("SetValue end");
+    }
+    public void setValue(int value, boolean updateTextField, boolean updateSpinner, boolean firePropertyEvent){
+        System.out.println("SetValue1 start");
         int oldValue = currentValue;
         setCurrentValue(value);
 
         if(updateTextField){
-            textField.setText(Integer.toString(value));
+            System.out.println("Text start");
+            textField.setText(Integer.toString(currentValue));
             textField.setForeground(Color.BLACK);
+            System.out.println("Text end");
         }
-    }
+        if(updateSpinner){
+            System.out.println("Spinner start");
+            spinner.setValue(currentValue);
+            System.out.println("Spinner end");
+        }
+        if(firePropertyEvent){
+            firePropertyChange("year", oldValue, currentValue);
+            System.out.println("fireprop");
+        }
+        System.out.println((Integer)spinner.getValue());
+        System.out.println("SetValue1 end");
+    }//SetValue
 
     public JSpinner getSpinner(){
         return spinner;
     }
-    public int getCurrentValue(){
-        return currentValue;
+    public boolean isCorrect(){
+        if(textField.getForeground().equals(Color.RED)){
+            return false;
+        }else{
+            return true;
+        }
+    }
+
+
+    public void setNewFont(Font font){
+//        super.setFont(font);
+        textField.setFont(font);
     }
 
     public void printInfo(){
-        System.out.println(spinner.getPreferredSize());
-        System.out.println(spinner.getMinimumSize());
-        System.out.println(spinner.getMaximumSize());
-        System.out.println(getPreferredSize());
-        System.out.println(getMinimumSize());
-        System.out.println(getMaximumSize());
+        System.out.println("Spinner prefSize: " + spinner.getPreferredSize());
+        System.out.println("Spinner minSize: " + spinner.getMinimumSize());
+        System.out.println("Spinner maxSize: " + spinner.getMaximumSize());
+        System.out.println("JYearChooser prefSize: " + getPreferredSize());
+        System.out.println("JYearChooser minSize: " + getMinimumSize());
+        System.out.println("JYearChooser maxSize: " + getMaximumSize());
     }
 
     public void focusGained(FocusEvent e){
     }
 
     public void focusLost(FocusEvent e){
-//        actionPerformed(null);
+        actionPerformed(null);
     }
 
     public void caretUpdate(CaretEvent e){
+        System.out.println("CaretUpdate start");
         try{
-            int testValue = Integer.valueOf(textField.getText()).intValue();
+            int testValue = Integer.parseInt(textField.getText());
             if((testValue >= minValue) && (testValue <= maxValue)){
                 textField.setForeground(editColor);
-//                setValue(testValue);
+//                setValue(testValue, false, true, false);
             }else{
                 textField.setForeground(Color.red);
             }
@@ -152,23 +189,27 @@ public class JYearChooser extends JPanel implements FocusListener, CaretListener
             if(ex instanceof NumberFormatException){
                 textField.setForeground(Color.red);
             }
-            // Ignore all other exceptions, e.g. illegal state exception
+            System.out.println(ex);
         }
         textField.repaint();
+        System.out.println("CaretUpdate end");
     }
 
     public void actionPerformed(ActionEvent e){
+        System.out.println("ActionPerformed start");
         if(textField.getForeground().equals(editColor)){
             setValue(Integer.parseInt(textField.getText()));
-            //Spara un evento per il listener
         }
+        System.out.println("ActionPerformed end");
     }
 
     public void stateChanged(ChangeEvent e) {
+        System.out.println("StateChanged start");
         if(spinnerModel instanceof SpinnerNumberModel){
             int value = spinnerModel.getNumber().intValue();
-            setValue(value);
+            setValue(value, true, false, true);
         }
+        System.out.println("StateChanged end");
     }
 
     public static void main(String args[]){
@@ -183,6 +224,5 @@ public class JYearChooser extends JPanel implements FocusListener, CaretListener
         System.out.println(frame.getMinimumSize());
         System.out.println(frame.getMaximumSize());
     }
-
 
 }//JYearChooser

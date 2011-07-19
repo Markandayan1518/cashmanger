@@ -7,6 +7,7 @@ package cashmanager.calendar;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -105,6 +106,7 @@ public class JDayChooser extends JPanel implements ActionListener{
     public void init(){
         initDayPanel();
         initWeekPanel();
+//        setNewFont(new Font(Font.DIALOG, Font.PLAIN, 9));
     }
 
     public void setNumberOfWeeks(){
@@ -181,10 +183,9 @@ public class JDayChooser extends JPanel implements ActionListener{
     public void initWeekPanel(){
         setNumberOfWeeks();
         Calendar tmp = (Calendar)calendar.clone();
-        System.out.println(tmp);
         tmp.set(Calendar.DAY_OF_MONTH, 1);
         weekNumbers[0].setText("");
-        weekNumbers[0].setVisible(false);
+        weekNumbers[0].setVisible(true);
         int i;
         for(i = 1; i < weekNumbers.length; i++){
             if(i <= numberOfWeeks){
@@ -209,10 +210,17 @@ public class JDayChooser extends JPanel implements ActionListener{
     }
 
     public void setDay(int newDay){
+        setDay(newDay, true);
+    }
+    public void setDay(int newDay, boolean firePropertyEvent){
         int oldDay = day;
         day = newDay;
         calendar.set(Calendar.DAY_OF_MONTH, day);
         calendar.getTime();
+
+        if(firePropertyEvent){
+            firePropertyChange("day", oldDay, day);
+        }
     }
     public void setMonth(int newMonth){
         int oldMonth = month;
@@ -228,13 +236,14 @@ public class JDayChooser extends JPanel implements ActionListener{
         calendar.getTime();
         updatePane();
     }
-
-    public static void main(String args[]){
-        JFrame frame = new JFrame("JDayChooser");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(new JDayChooser());
-        frame.pack();
-        frame.setVisible(true);
+    public void setNewFont(Font font){
+        super.setFont(font);
+        for(JButton b : dayButtons){
+            b.setFont(font);
+        }
+        for(JButton b : weekNumbers){
+            b.setFont(font);
+        }
     }
 
     public void actionPerformed(ActionEvent e){
@@ -244,4 +253,11 @@ public class JDayChooser extends JPanel implements ActionListener{
         System.out.println(day);
     }
 
+    public static void main(String args[]){
+        JFrame frame = new JFrame("JDayChooser");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.add(new JDayChooser());
+        frame.pack();
+        frame.setVisible(true);
+    }
 }//JDayChooser

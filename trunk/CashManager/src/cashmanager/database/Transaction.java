@@ -11,6 +11,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -43,46 +44,43 @@ public class Transaction extends CashManagerDB{
                     "(causal, ammount, transaction_date, description) " +
                     "values ";
 
-    //Set Methods
     public void setIdTrans(long id){
         idTrans = id;
+    }
+    public long getIdTrans(){
+        return idTrans;
     }
     public void setCausal(String caus){
         causal = caus;
     }
-    public void setAmmount(double amm){
-        ammount = amm;
-    }
-    public void setTransactionDate(Calendar date){
-        transactionDate = date;
-    }
-    public void setDescription(String desc){
-        description = desc;
-    }
-    //Set Methods
-
-    //Get methods
-    public long getIdTrans(){
-        return idTrans;
-    }
     public String getCausal(){
         return causal;
+    }
+    public void setAmmount(double amm){
+        ammount = amm;
     }
     public double getAmmount(){
         return ammount;
     }
+    public void setTransactionDate(Calendar date){
+        transactionDate = date;
+    }
     public Calendar getTransactionDate(){
         return transactionDate;
+    }
+    public void setDescription(String desc){
+        description = desc;
     }
     public String getDescription(){
         return description;
     }
-    //Get Methods
 
     @Override
     public String toString(){
+        DateFormat df = DateFormat.getDateInstance();
+        String tmpDate = df.format(getTransactionDate().getTime());
         return String.format("Transaction [id=%d, causal=%s, ammount=%f, date=%s, description=%s] ",
-                getIdTrans(), getCausal(), getAmmount(), "date", getDescription());
+                getIdTrans(), getCausal(), getAmmount(), tmpDate, getDescription());
     }
 
     public static void printTransactionList(List<Transaction> list){
@@ -204,8 +202,8 @@ public class Transaction extends CashManagerDB{
 
     public static void main(String args[]){
 
-        Transaction.deleteTable(checkTab, deleteTab);
-        Transaction.dropTable(checkTab, dropTable);
+//        Transaction.deleteTable(checkTab, deleteTab);
+//        Transaction.dropTable(checkTab, dropTable);
         Transaction.createTable(checkTab, createTab);
         System.out.println("Insert a new transaction causal or exit to quit.");
         Scanner s = new Scanner(System.in);

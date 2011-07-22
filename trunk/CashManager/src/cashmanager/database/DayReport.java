@@ -1,7 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+
 
 package cashmanager.database;
 
@@ -17,8 +14,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -52,6 +47,9 @@ public class DayReport extends CashManagerDB{
     public Date getDay(){
         return day;
     }
+    public long getTimeInMillis(){
+        return day.getTime();
+    }
     public void setIncome(double in){
         income = in;
     }
@@ -80,6 +78,38 @@ public class DayReport extends CashManagerDB{
         System.out.println("Finished printing DayReport list.");
         System.out.println("--------------------------------------------------");
     }
+    public static boolean isDayReportIn(DayReport d){
+        Connection conn = getConnection();
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try{
+            ps = conn.prepareStatement("select * from dayReport where day = ?");
+            ps.setDate(1, new java.sql.Date(d.getTimeInMillis()));
+            rs = ps.executeQuery();
+            return rs.next();
+        }catch(SQLException ex){
+            System.err.println(ex.getMessage());
+            ex.printStackTrace();
+        }
+        
+        finally{
+            try{
+                if(rs != null){
+                    rs.close();
+                }
+                if(ps != null){
+                    ps.close();
+                }
+                disconnect(conn);
+            }catch(SQLException ex){
+                System.err.println(ex.getMessage());
+                ex.printStackTrace();
+            }
+        }//finally
+
+        return false;
+    }
+
     public static List<DayReport> getAllDayReport(){
         Connection conn = getConnection();
         Statement s = null;
@@ -96,32 +126,66 @@ public class DayReport extends CashManagerDB{
                 arr.add(dr);
             }
         }catch(SQLException ex){
-            System.err.println("SQLException thrown in class" + Transaction.class.getName());
             System.err.println(ex.getMessage());
             ex.printStackTrace();
-        }finally{
-            if(rs != null){
-                try {
-                    rs.close();
-                } catch (SQLException ex) {
-                    System.err.println(ex.getMessage());
-                    ex.printStackTrace();
-                }
-            }
-            if(s != null){
-                try {
-                    s.close();
-                } catch (SQLException ex) {
-                    System.err.println(ex.getMessage());
-                    ex.printStackTrace();
-                }
-            }
-            if(conn != null){
-                disconnect(conn);
-            }
         }
+        
+        finally{
+            try{
+                if(rs != null){
+                    rs.close();
+                }
+                if(s != null){
+                    s.close();
+                }
+                disconnect(conn);
+            }catch(SQLException ex){
+                System.err.println(ex.getMessage());
+                ex.printStackTrace();
+            }
+        }//finally
+
         return arr;
     }//getAllDayReport
+    public static List<DayReport> getDayReportBetween(DayReport d1, DayReport d2){
+        Connection conn = getConnection();
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        ArrayList<DayReport> arr = new ArrayList<DayReport>();
+        try{
+            ps = conn.prepareStatement("select * from dayReport where day >= ? and day <= ?");
+            ps.setDate(1, new java.sql.Date(d1.getTimeInMillis()));
+            ps.setDate(2, new java.sql.Date(d2.getTimeInMillis()));
+            rs = ps.executeQuery();
+            while(rs.next()){
+                DayReport dr = new DayReport();
+                dr.setDay(rs.getDate("day").getTime());
+                dr.setIncome(rs.getDouble("income"));
+                dr.setOutcome(rs.getDouble("outcome"));
+                arr.add(dr);
+            }
+        }catch(SQLException ex){
+            System.err.println(ex.getMessage());
+            ex.printStackTrace();
+        }
+        
+        finally{
+            try{
+                if(rs != null){
+                    rs.close();
+                }
+                if(ps != null){
+                    ps.close();
+                }
+                disconnect(conn);
+            }catch(SQLException ex){
+                System.err.println(ex.getMessage());
+                ex.printStackTrace();
+            }
+        }//finally
+
+        return arr;
+    }//getDayReportBetween
 
     public static void insertDayReport(DayReport dayRep){
         Connection conn = getConnection();
@@ -137,19 +201,20 @@ public class DayReport extends CashManagerDB{
         } catch (SQLException ex) {
             System.err.println(ex.getMessage());
             ex.printStackTrace();
-        }finally{
-            if(ps != null){
-                try {
-                    ps.close();
-                } catch (SQLException ex) {
-                    System.err.println(ex.getMessage());
-                    ex.printStackTrace();
-                }
-            }
-            if(conn != null){
-                disconnect(conn);
-            }
         }
+        
+        finally{
+            try{
+                if(ps != null){
+                    ps.close();
+                }
+                disconnect(conn);
+            }catch(SQLException ex){
+                System.err.println(ex.getMessage());
+                ex.printStackTrace();
+            }
+        }//finally
+
     }//insertDayReport
     public static void insertDayReports(List<DayReport> list){
         String ins = insertInto;
@@ -174,20 +239,22 @@ public class DayReport extends CashManagerDB{
         }catch(SQLException ex){
             System.err.println(ex.getMessage());
             ex.printStackTrace();
-        }finally{
-            if(ps != null){
-                try {
-                    ps.close();
-                } catch (SQLException ex) {
-                    System.err.println(ex.getMessage());
-                    ex.printStackTrace();
-                }
-            }
-            if(conn != null){
-                disconnect(conn);
-            }
         }
+        
+        finally{
+            try{
+                if(ps != null){
+                    ps.close();
+                }
+                disconnect(conn);
+            }catch(SQLException ex){
+                System.err.println(ex.getMessage());
+                ex.printStackTrace();
+            }
+        }//finally
+
     }//insertDayReports
+
     public static void updateDayReport(DayReport dayRep){
         Connection conn = getConnection();
         PreparedStatement ps = null;
@@ -200,20 +267,27 @@ public class DayReport extends CashManagerDB{
         }catch(SQLException ex){
             System.err.println(ex.getMessage());
             ex.printStackTrace();
-        }finally{
-            if(ps != null){
-                try {
-                    ps.close();
-                } catch (SQLException ex) {
-                    System.err.println(ex.getMessage());
-                    ex.printStackTrace();
-                }
-            }
-            if(conn != null){
-                disconnect(conn);
-            }
         }
+
+        finally{
+            try{
+                if(ps != null){
+                    ps.close();
+                }
+                disconnect(conn);
+            }catch(SQLException ex){
+                System.err.println(ex.getMessage());
+                ex.printStackTrace();
+            }
+        }//finally
     }//updateDayReport
+    public static void updateOrInsert(DayReport dr){
+        if(isDayReportIn(dr)){
+            updateDayReport(dr);
+        }else{
+            insertDayReport(dr);
+        }
+    }//updateOrInsert
 
     public static void main(String args[]){
 //        DayReport.deleteTable(checkTab, deleteTab);

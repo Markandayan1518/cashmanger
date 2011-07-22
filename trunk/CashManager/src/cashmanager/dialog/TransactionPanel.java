@@ -1,11 +1,8 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package cashmanager.dialog;
 
 import cashmanager.calendar.JDateChooser;
+import cashmanager.database.DayReport;
 import java.awt.Window;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -25,17 +22,22 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
+
 /**
  *
  * @author Kiko
  */
-public class TransactionDialog extends JDialog{
+public class TransactionPanel extends JPanel{
 
+    private JDialog dialog;
+    private boolean type;
+
+    //Dialog fields
     private JPanel fieldPanel;
     private JLabel causalLabel;
     private JComboBox causalBox;
-    private JLabel ammountLabel;
-    private JTextField ammountField;
+    private JLabel amountLabel;
+    private JTextField amountField;
     private JLabel dateLabel;
     private JDateChooser dateField;
     private JLabel descriptionLabel;
@@ -47,19 +49,33 @@ public class TransactionDialog extends JDialog{
     private JButton okButton;
     private JButton cancelButton;
 
-    public TransactionDialog(Window owner){
-        super(owner, "Transaction Dialog");
+    public TransactionPanel(){
+        this(new JDialog(), true);
+    }
+
+    public TransactionPanel(JDialog dialog, boolean type){
+        super();
+        setLayout(new BorderLayout());
+        this.dialog = dialog;
+        this.type = type;
         initFields();
         initCommands();
         add(fieldPanel, BorderLayout.CENTER);
         add(commandPanel, BorderLayout.SOUTH);
-        setSize(getPreferredSize());
+
+        this.dialog.add(this);
+        printInfo();
+    }
+
+    public JDialog getDialog(){
+        return dialog;
+    }
+
+    public void printInfo(){
         System.out.println(this.getSize());
         System.out.println(this.getPreferredSize());
         System.out.println(this.getMaximumSize());
         System.out.println(this.getMinimumSize());
-        setVisible(true);
-        setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
     }
 
     private final void initFields(){
@@ -74,9 +90,9 @@ public class TransactionDialog extends JDialog{
         List<String> causalList = Transaction.getAllCausal();
         causalBox = new JComboBox(causalList.toArray());
         causalBox.setEditable(true);
-        ammountLabel = new JLabel("Ammount:");
-        ammountLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-        ammountField = new JTextField(15);
+        amountLabel = new JLabel("Amount:");
+        amountLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+        amountField = new JTextField(15);
         dateLabel = new JLabel("Transaction Date:");
         dateLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         dateField = new JDateChooser();
@@ -90,31 +106,29 @@ public class TransactionDialog extends JDialog{
 
         layout.setHorizontalGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
-                    .addComponent(causalLabel)
-                    .addComponent(ammountLabel)
-                    .addComponent(dateLabel)
-                    .addComponent(descriptionLabel))
+                .addComponent(causalLabel)
+                .addComponent(amountLabel)
+                .addComponent(dateLabel)
+                .addComponent(descriptionLabel))
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    .addComponent(causalBox)
-                    .addComponent(ammountField)
-                    .addComponent(dateField)
-                    .addComponent(descPane))
-        );
+                .addComponent(causalBox)
+                .addComponent(amountField)
+                .addComponent(dateField)
+                .addComponent(descPane)));
 
         layout.setVerticalGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                    .addComponent(causalLabel)
-                    .addComponent(causalBox))
+                .addComponent(causalLabel)
+                .addComponent(causalBox))
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                    .addComponent(ammountLabel)
-                    .addComponent(ammountField))
+                .addComponent(amountLabel)
+                .addComponent(amountField))
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                    .addComponent(dateLabel)
-                    .addComponent(dateField))
+                .addComponent(dateLabel)
+                .addComponent(dateField))
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    .addComponent(descriptionLabel)
-                    .addComponent(descPane))
-        );
+                .addComponent(descriptionLabel)
+                .addComponent(descPane)));
 
     }//initFields
 
@@ -123,22 +137,35 @@ public class TransactionDialog extends JDialog{
 
         okButton = new JButton("OK");
         okButton.addActionListener(new ActionListener(){
+
             public void actionPerformed(ActionEvent e){
                 Transaction trans = new Transaction();
-                trans.setCausal((String)causalBox.getSelectedItem());
-                trans.setAmmount(Double.parseDouble(ammountField.getText()));
+                trans.setCausal((String) causalBox.getSelectedItem());
+                trans.setAmount(Double.parseDouble(amountField.getText()));
                 trans.setTransactionDate(dateField.getCalendar());
                 trans.setDescription(descriptionArea.getText());
 
+                DayReport dr = new DayReport();
+                dr.setDay(dateField.getTimeInMillis());
+                if(type){
+                    trans.setType("in");
+                    dr.setIncome(Double.parseDouble(amountField.getText()));
+                }else{
+                    trans.setType("out");
+                    dr.setOutcome(Double.parseDouble(amountField.getText()));
+                }
+
                 Transaction.insertTransaction(trans);
-                dispose();
+                DayReport.updateOrInsert(dr);
+                dialog.dispose();
             }
         });
 
         cancelButton = new JButton("Cancel");
         cancelButton.addActionListener(new ActionListener(){
+
             public void actionPerformed(ActionEvent e){
-                dispose();
+                dialog.dispose();
             }
         });
 
@@ -147,18 +174,9 @@ public class TransactionDialog extends JDialog{
     }//initCommands
 
     public static void main(String args[]){
-        final JFrame frame = null;
-//        final JFrame frame = new JFrame();
-//        JButton button = new JButton("OK");
-//        button.addActionListener(new ActionListener(){
-//            public void actionPerformed(ActionEvent e){
-                TransactionDialog t = new TransactionDialog(frame);
-//            }
-//        });
-//        frame.add(button);
-//        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//        frame.pack();
-//        frame.setLocation(500, 500);
-//        frame.setVisible(true);
+        TransactionPanel t = new TransactionPanel();
+        t.getDialog().pack();
+        t.getDialog().setVisible(true);
+        t.getDialog().setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
     }
-}//TransactionDialog
+}//TransactionPanel

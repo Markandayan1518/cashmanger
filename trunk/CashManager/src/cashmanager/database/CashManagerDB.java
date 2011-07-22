@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package cashmanager.database;
 
@@ -76,10 +72,10 @@ public class CashManagerDB {
 
     protected static boolean check4Table(Connection conn, String update) throws SQLException {
       Statement s = null;
-      try {
+      try{
          s = conn.createStatement();
          s.execute(update);
-      }  catch (SQLException sqle) {
+      }catch(SQLException sqle){
          String theError = (sqle).getSQLState();
          //   System.out.println("  Utils GOT:  " + theError);
          /** If table exists will get -  WARNING 02000: No row was found **/
@@ -92,7 +88,9 @@ public class CashManagerDB {
              System.out.println("check4Table: Unhandled SQLException" );
              throw sqle;
           }
-      }finally{
+      }
+
+      finally{
           if(s != null)
               s.close();
       }
@@ -103,16 +101,17 @@ public class CashManagerDB {
     public static void createTable(String checkTab, String createTab){
         Connection conn = getConnection();
         Statement s = null;
-        try {
+        try{
             if(!check4Table(conn, checkTab)){
                 s = conn.createStatement();
                 s.executeUpdate(createTab);
             }
-        } catch (SQLException ex) {
+        }catch(SQLException ex){
             System.err.println("SQLException thrown in class" + CashManagerDB.class.getName());
             System.err.println(ex.getMessage());
             ex.printStackTrace();
-        }finally{
+        }
+        finally{
             try{
                 if(s != null){
                     s.close();

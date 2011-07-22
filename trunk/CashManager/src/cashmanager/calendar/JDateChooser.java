@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package cashmanager.calendar;
 
@@ -80,6 +76,9 @@ public class JDateChooser extends JPanel implements PropertyChangeListener, Acti
 
     public Calendar getCalendar(){
         return calendar;
+    }
+    public long getTimeInMillis(){
+        return calendar.getTimeInMillis();
     }
 
     public void propertyChange(PropertyChangeEvent evt) {

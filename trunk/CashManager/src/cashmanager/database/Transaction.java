@@ -28,6 +28,9 @@ public class Transaction extends CashManagerDB{
     private String description;
     private String type;
 
+    public static final String IN = "in";
+    public static final String OUT = "out";
+
     private static final String createTab = "create table transactions " +
             "(idtrans bigint not null generated always as identity primary key, " +
             "causal varchar(150) not null , " +
@@ -64,6 +67,12 @@ public class Transaction extends CashManagerDB{
     }
     public void setTransactionDate(Calendar date){
         transactionDate = date;
+    }
+    public void setTransactionDate(long timeInMillis){
+        Calendar tmp = Calendar.getInstance();
+        tmp.setTimeInMillis(timeInMillis);
+        tmp.getTimeInMillis();
+        setTransactionDate(tmp);
     }
     public Calendar getTransactionDate(){
         return transactionDate;

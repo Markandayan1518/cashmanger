@@ -89,7 +89,6 @@ public class Transaction extends CashManagerDB{
     public String getType(){
         return type;
     }
-
     @Override
     public String toString(){
         DateFormat df = DateFormat.getDateInstance();
@@ -106,13 +105,18 @@ public class Transaction extends CashManagerDB{
         System.out.println("Finished printing transaction list.");
         System.out.println("--------------------------------------------------");
     }
-
-    public static void insertTransaction(Transaction trans){
-        Connection conn = getConnection();
+    public static boolean isTransactionInOrOut(Transaction trans){
+        if(trans.getType().equals(Transaction.IN)){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    public static void insertTransaction(Connection conn, Transaction trans){
         PreparedStatement ps = null;
         String ins = insertInto;
         ins += "(?, ?, ?, ?, ?)";
-        try {
+        try{
             ps = conn.prepareStatement(ins);
             ps.setString(1, trans.getCausal());
             ps.setDouble(2, trans.getAmount());
@@ -121,25 +125,48 @@ public class Transaction extends CashManagerDB{
             ps.setString(5, trans.getType());
             ps.executeUpdate();
 
-        } catch (SQLException ex) {
+            DayReport dayRep = new DayReport();
+            dayRep.setDay(trans.getTransactionDate().getTimeInMillis());
+            if(isTransactionInOrOut(trans)){
+                dayRep.setIncome(trans.getAmount());
+            }else{
+                dayRep.setOutcome(trans.getAmount());
+            }
+            DayReport.updateOrInsert(conn, dayRep);
+        }catch(SQLException ex){
             System.err.println(ex.getMessage());
             ex.printStackTrace();
         }
-        
         finally{
             try{
                 if(ps != null){
                     ps.close();
                 }
-                disconnect(conn);
             }catch(SQLException ex){
                 System.err.println(ex.getMessage());
                 ex.printStackTrace();
             }
         }//finally
+        
 
     }//insertTransaction
-    public static void insertTransactions(List<Transaction> list){
+    public static void insertTransactions(List<Transaction> transactionList){
+        Connection conn = getConnection();
+        try{
+            conn.setAutoCommit(false);
+            for(Transaction trans : transactionList){
+                Transaction.insertTransaction(conn, trans);
+            }
+            conn.commit();
+        }catch(SQLException ex){
+            System.err.println(ex.getMessage());
+            ex.printStackTrace();
+        }
+        finally{
+            disconnect(conn);
+        }//finally
+    }
+    public static void insertTransactions2(List<Transaction> list){
         String ins = insertInto;
         for(int i = 1; i < list.size(); i++){
             ins += "(?, ?, ?, ?, ?), ";
@@ -182,7 +209,6 @@ public class Transaction extends CashManagerDB{
         }//finally
 
     }//insertTransactions
-
     public static List<Transaction> getAllTransaction(){
         Connection conn = getConnection();
         Statement s = null;
@@ -264,7 +290,6 @@ public class Transaction extends CashManagerDB{
 
         return arr;
     }//getAllCausal
-
     public static void main(String args[]){
 
 //        Transaction.deleteTable(checkTab, deleteTab);
@@ -273,8 +298,9 @@ public class Transaction extends CashManagerDB{
         System.out.print("Insert a new transaction causal or exit to quit: ");
         Scanner s = new Scanner(System.in);
         String tmp = s.nextLine();
-        Transaction t = new Transaction();
+        List<Transaction> list = new ArrayList<Transaction>();
         while(!tmp.equals("exit")){
+            Transaction t = new Transaction();
             t.setCausal(tmp);
             System.out.print("Insert transaction description: ");
             t.setDescription(s.nextLine());
@@ -291,12 +317,15 @@ public class Transaction extends CashManagerDB{
             System.out.print("Insert transaction type(in or out): ");
             t.setType(s.nextLine());
 
-            Transaction.insertTransaction(t);
+            list.add(t);
 
             System.out.print("Insert a new transaction or exit to quit: ");
             tmp = s.nextLine();
         }
         System.out.println("Done inserting.");
+
+        Transaction.insertTransactions(list);
+
         Transaction.printTransactionList(Transaction.getAllTransaction());
         Transaction.shutdown();
         System.out.println("Main finisched.");

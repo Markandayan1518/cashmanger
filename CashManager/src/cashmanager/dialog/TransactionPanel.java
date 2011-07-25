@@ -3,22 +3,19 @@ package cashmanager.dialog;
 
 import cashmanager.calendar.JDateChooser;
 import cashmanager.database.DayReport;
-import java.awt.Window;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-
 import cashmanager.database.Transaction;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Calendar;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
@@ -52,7 +49,6 @@ public class TransactionPanel extends JPanel{
     public TransactionPanel(){
         this(new JDialog(), true);
     }
-
     public TransactionPanel(JDialog dialog, boolean type){
         super();
         setLayout(new BorderLayout());
@@ -66,18 +62,15 @@ public class TransactionPanel extends JPanel{
         this.dialog.add(this);
         printInfo();
     }
-
     public JDialog getDialog(){
         return dialog;
-    }
-
+    }//getDialog
     public void printInfo(){
         System.out.println(this.getSize());
         System.out.println(this.getPreferredSize());
         System.out.println(this.getMaximumSize());
         System.out.println(this.getMinimumSize());
-    }
-
+    }//printInfo
     private final void initFields(){
         fieldPanel = new JPanel();
         GroupLayout layout = new GroupLayout(fieldPanel);
@@ -131,7 +124,6 @@ public class TransactionPanel extends JPanel{
                 .addComponent(descPane)));
 
     }//initFields
-
     private final void initCommands(){
         commandPanel = new JPanel();
 
@@ -144,19 +136,15 @@ public class TransactionPanel extends JPanel{
                 trans.setAmount(Double.parseDouble(amountField.getText()));
                 trans.setTransactionDate(dateField.getCalendar());
                 trans.setDescription(descriptionArea.getText());
-
-                DayReport dr = new DayReport();
-                dr.setDay(dateField.getTimeInMillis());
                 if(type){
                     trans.setType("in");
-                    dr.setIncome(Double.parseDouble(amountField.getText()));
                 }else{
                     trans.setType("out");
-                    dr.setOutcome(Double.parseDouble(amountField.getText()));
                 }
 
-                Transaction.insertTransaction(trans);
-                DayReport.updateOrInsert(dr);
+                List<Transaction> list = new ArrayList<Transaction>();
+                list.add(trans);
+                Transaction.insertTransactions(list);
                 dialog.dispose();
             }
         });
@@ -172,11 +160,11 @@ public class TransactionPanel extends JPanel{
         commandPanel.add(okButton);
         commandPanel.add(cancelButton);
     }//initCommands
-
     public static void main(String args[]){
         TransactionPanel t = new TransactionPanel();
         t.getDialog().pack();
         t.getDialog().setVisible(true);
         t.getDialog().setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-    }
+    }//main
+
 }//TransactionPanel

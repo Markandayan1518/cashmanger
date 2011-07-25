@@ -1,5 +1,4 @@
 
-
 package cashmanager.database;
 
 import java.sql.Connection;
@@ -35,7 +34,7 @@ public class DayReport extends CashManagerDB{
     private static final String insertInto = "insert into dayReport" +
                     "(day, income, outcome) values ";
     private static final String updateRow = "update dayReport"
-            + "set income = income + ? , outcome = outcome + ? where day = ?";
+            + "set income=income + ? , outcome=outcome + ? where day= ?";
 
     public void setDay(Date day){
         this.day = day;
@@ -62,7 +61,6 @@ public class DayReport extends CashManagerDB{
     public double getOutcome(){
         return outcome;
     }
-
     @Override
     public String toString(){
         DateFormat df = DateFormat.getDateInstance();
@@ -78,8 +76,7 @@ public class DayReport extends CashManagerDB{
         System.out.println("Finished printing DayReport list.");
         System.out.println("--------------------------------------------------");
     }
-    public static boolean isDayReportIn(DayReport d){
-        Connection conn = getConnection();
+    public static boolean isDayReportIn(Connection conn, DayReport d){
         PreparedStatement ps = null;
         ResultSet rs = null;
         try{
@@ -91,7 +88,6 @@ public class DayReport extends CashManagerDB{
             System.err.println(ex.getMessage());
             ex.printStackTrace();
         }
-        
         finally{
             try{
                 if(rs != null){
@@ -100,7 +96,6 @@ public class DayReport extends CashManagerDB{
                 if(ps != null){
                     ps.close();
                 }
-                disconnect(conn);
             }catch(SQLException ex){
                 System.err.println(ex.getMessage());
                 ex.printStackTrace();
@@ -109,7 +104,6 @@ public class DayReport extends CashManagerDB{
 
         return false;
     }
-
     public static List<DayReport> getAllDayReport(){
         Connection conn = getConnection();
         Statement s = null;
@@ -186,9 +180,7 @@ public class DayReport extends CashManagerDB{
 
         return arr;
     }//getDayReportBetween
-
-    public static void insertDayReport(DayReport dayRep){
-        Connection conn = getConnection();
+    public static void insertDayReport(Connection conn, DayReport dayRep){
         PreparedStatement ps = null;
         String ins = insertInto;
         ins += "(?, ?, ?)";
@@ -202,13 +194,11 @@ public class DayReport extends CashManagerDB{
             System.err.println(ex.getMessage());
             ex.printStackTrace();
         }
-        
         finally{
             try{
                 if(ps != null){
                     ps.close();
                 }
-                disconnect(conn);
             }catch(SQLException ex){
                 System.err.println(ex.getMessage());
                 ex.printStackTrace();
@@ -254,9 +244,7 @@ public class DayReport extends CashManagerDB{
         }//finally
 
     }//insertDayReports
-
-    public static void updateDayReport(DayReport dayRep){
-        Connection conn = getConnection();
+    public static void updateDayReport(Connection conn, DayReport dayRep){
         PreparedStatement ps = null;
         try{
             ps = conn.prepareStatement(updateRow);
@@ -268,51 +256,55 @@ public class DayReport extends CashManagerDB{
             System.err.println(ex.getMessage());
             ex.printStackTrace();
         }
-
         finally{
             try{
                 if(ps != null){
                     ps.close();
                 }
-                disconnect(conn);
             }catch(SQLException ex){
                 System.err.println(ex.getMessage());
                 ex.printStackTrace();
             }
         }//finally
     }//updateDayReport
-    public static void updateOrInsert(DayReport dr){
-        if(isDayReportIn(dr)){
-            updateDayReport(dr);
+    public static void updateOrInsert(Connection conn, DayReport dr){
+        if(isDayReportIn(conn, dr)){
+            updateDayReport(conn, dr);
         }else{
-            insertDayReport(dr);
+            insertDayReport(conn, dr);
         }
     }//updateOrInsert
-
     public static void main(String args[]){
 //        DayReport.deleteTable(checkTab, deleteTab);
 //        DayReport.dropTable(checkTab, dropTable);
         DayReport.createTable(checkTab, createTab);
-        DayReport dr = new DayReport();
-        Scanner scan = new Scanner(System.in);
-        System.out.println("Enter 1 to continue or exit to quit.");
-        String s = scan.nextLine();
-        while(!s.equals("exit")){
-            System.out.print("Insert the date(dd-MM-yyyy): ");
-            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
-            Date day = new Date();
-            try {
-                day = sdf.parse(scan.nextLine());
-            } catch (ParseException ex) {
-            }
-            dr.setDay(day);
-            System.out.print("Insert the income: ");
-            dr.setIncome(Double.parseDouble(scan.nextLine()));
-            System.out.print("Insert the outcome: ");
-            dr.setOutcome(Double.parseDouble(scan.nextLine()));
-            DayReport.insertDayReport(dr);
+        Connection conn = getConnection();
+        try{
+            conn.setAutoCommit(false);
+            Scanner scan = new Scanner(System.in);
             System.out.println("Enter 1 to continue or exit to quit.");
-            s = scan.nextLine();
+            String s = scan.nextLine();
+            while(!s.equals("exit")){
+                DayReport dr = new DayReport();
+                System.out.print("Insert the date(dd-MM-yyyy): ");
+                SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+                Date day = new Date();
+                try{
+                    day = sdf.parse(scan.nextLine());
+                }catch(ParseException ex){}
+                dr.setDay(day);
+                System.out.print("Insert the income: ");
+                dr.setIncome(Double.parseDouble(scan.nextLine()));
+                System.out.print("Insert the outcome: ");
+                dr.setOutcome(Double.parseDouble(scan.nextLine()));
+                DayReport.insertDayReport(conn, dr);
+                System.out.println("Enter 1 to continue or exit to quit.");
+                s = scan.nextLine();
+            }
+            conn.commit();
+        }catch(SQLException ex){
+            System.err.println(ex.getMessage());
+            ex.printStackTrace();
         }
         DayReport.printDayReportList(DayReport.getAllDayReport());
         DayReport.shutdown();

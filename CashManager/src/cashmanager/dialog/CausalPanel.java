@@ -29,44 +29,49 @@ import javax.swing.event.CaretListener;
  *
  * @author Admin
  */
-public class DatePanel extends JPanel{
+public class CausalPanel extends JPanel{
+
     private JDialog dialog;
     private boolean type;
     private List<Transaction> transactionList;
 
-    private JPanel datePanel;
-    private JLabel dateLabel;
-    private JDateChooser dateField;
+    private JPanel causalPanel;
+    private JLabel causalLabel;
+    private JComboBox causalField;
+    private boolean causalValid;
     private JButton addButton;
     private JButton deleteButton;
 
-    private JScrollPane fieldScroll;
     private JPanel fieldPanel;
+    private JScrollPane fieldScroll;
     private List<RecordPanel> fieldList;
 
     private JPanel commandPanel;
     private JButton okButton;
     private JButton cancelButton;
 
-    public DatePanel(){
+    public CausalPanel(){
         this(new JDialog(), true);
     }
-    public DatePanel(JDialog dialog, boolean type){
+    public CausalPanel(JDialog dialog, boolean type){
         this.dialog = dialog;
         this.type = type;
         transactionList = new ArrayList<Transaction>();
-        initDatePanel();
+        initCausalPanel();
         initFieldPanel();
         initCommandPanel();
         setLayout(new BorderLayout());
-        add(datePanel, BorderLayout.PAGE_START);
+        add(causalPanel, BorderLayout.PAGE_START);
         add(fieldScroll, BorderLayout.CENTER);
         add(commandPanel, BorderLayout.PAGE_END);
     }
-    private void initDatePanel(){
-        datePanel = new JPanel();
-        dateLabel = new JLabel("Transaction date: ");
-        dateField = new JDateChooser();
+    private void initCausalPanel(){
+        causalPanel = new JPanel();
+        causalLabel = new JLabel("Causal: ");
+        List<String> causalList = Transaction.getAllCausal();
+        causalField = new JComboBox(causalList.toArray());
+        causalField.setEditable(true);
+        causalValid = true;
         addButton = new JButton("Add");
         addButton.addActionListener(new ActionListener(){
 
@@ -89,14 +94,14 @@ public class DatePanel extends JPanel{
             }
         });
 
-        datePanel.setLayout(new BoxLayout(datePanel, BoxLayout.LINE_AXIS));
-        datePanel.add(dateLabel);
-        datePanel.add(dateField);
-        datePanel.add(Box.createRigidArea(new Dimension(50, 0)));
-        datePanel.add(addButton);
-        datePanel.add(Box.createRigidArea(new Dimension(20, 0)));
-        datePanel.add(deleteButton);
-    }//initDatePanel
+        causalPanel.setLayout(new BoxLayout(causalPanel, BoxLayout.LINE_AXIS));
+        causalPanel.add(causalLabel);
+        causalPanel.add(causalField);
+        causalPanel.add(Box.createRigidArea(new Dimension(50, 0)));
+        causalPanel.add(addButton);
+        causalPanel.add(Box.createRigidArea(new Dimension(20, 0)));
+        causalPanel.add(deleteButton);
+    }//initCausalPanel
     private void initFieldPanel(){
         fieldPanel = new JPanel();
         fieldPanel.setLayout(new BoxLayout(fieldPanel, BoxLayout.PAGE_AXIS));
@@ -145,8 +150,8 @@ public class DatePanel extends JPanel{
     }//updateFieldPanel
     public static void main(String args[]){
         JDialog dialog = new JDialog();
-        DatePanel dp = new DatePanel(dialog, true);
-        dialog.add(dp, BorderLayout.CENTER);
+        CausalPanel cp = new CausalPanel(dialog, true);
+        dialog.add(cp, BorderLayout.CENTER);
         dialog.setVisible(true);
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         dialog.pack();
@@ -154,39 +159,19 @@ public class DatePanel extends JPanel{
 
     class RecordPanel extends JPanel{
 
-        private JLabel causalLabel;
-        private JComboBox causalField;
-        private boolean causalValid;
         private JLabel amountLabel;
         private JTextField amountField;
         private boolean amountValid;
+        private JLabel dateLabel;
+        private JDateChooser dateField;
         private JLabel descriptionLabel;
         private JTextArea descriptionArea;
+        private JScrollPane descriptionScroll;
         private boolean descriptionValid;
-        private JScrollPane descScroll;
         private static final int BORDER_WIDTH = 1;
 
         private RecordPanel(){
             setBorder(new LineBorder(Color.BLACK, BORDER_WIDTH));
-            causalLabel = new JLabel("Causal: ");
-            List<String> causalList = Transaction.getAllCausal();
-            causalField = new JComboBox(causalList.toArray());
-            causalField.setEditable(true);
-            causalValid = true;
-            /*
-            causalField.addFocusListener(new FocusListener(){
-
-                public void focusLost(FocusEvent e){
-                    if(causalField.getText().length() > 50){
-                        causalField.setForeground(Color.RED);
-                        causalValid = false;
-                    }else{
-                        causalField.setForeground(Color.BLACK);
-                        causalValid = true;
-                    }
-                }
-            });
-            */
             amountLabel = new JLabel("Amount: ");
             amountField = new JTextField(10);
             amountField.addCaretListener(new CaretListener() {
@@ -203,10 +188,12 @@ public class DatePanel extends JPanel{
                 }
             });
             amountValid = false;
+            dateLabel = new JLabel("Transaction Date: ");
+            dateField = new JDateChooser();
             descriptionLabel = new JLabel("Description: ");
             descriptionArea = new JTextArea(5,10);
-            descriptionArea.setWrapStyleWord(true);
             descriptionArea.setLineWrap(true);
+            descriptionArea.setWrapStyleWord(true);
             descriptionArea.addCaretListener(new CaretListener(){
 
                 public void caretUpdate(CaretEvent e){
@@ -219,7 +206,7 @@ public class DatePanel extends JPanel{
                     }
                 }
             });
-            descScroll = new JScrollPane(descriptionArea);
+            descriptionScroll = new JScrollPane(descriptionArea);
             descriptionValid = true;
             initLayout();
         }
@@ -230,30 +217,30 @@ public class DatePanel extends JPanel{
             setLayout(gp);
             gp.setHorizontalGroup(gp.createSequentialGroup()
                     .addGroup(gp.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addComponent(causalLabel)
+                        .addComponent(amountLabel)
                         .addComponent(descriptionLabel))
                     .addGroup(gp.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(gp.createSequentialGroup()
-                            .addComponent(causalField)
-                            .addComponent(amountLabel)
-                            .addComponent(amountField))
-                        .addComponent(descScroll)));
+                            .addComponent(amountField)
+                            .addComponent(dateLabel)
+                            .addComponent(dateField))
+                        .addComponent(descriptionScroll)));
 
             gp.setVerticalGroup(gp.createSequentialGroup()
                     .addGroup(gp.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(gp.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                            .addComponent(causalLabel)
-                            .addComponent(causalField))
-                        .addGroup(gp.createParallelGroup(GroupLayout.Alignment.BASELINE)
                             .addComponent(amountLabel)
-                            .addComponent(amountField)))
+                            .addComponent(amountField))
+                        .addGroup(gp.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                            .addComponent(dateLabel)
+                            .addComponent(dateField)))
                     .addGroup(gp.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                         .addComponent(descriptionLabel)
-                         .addComponent(descScroll)));
+                        .addComponent(descriptionLabel)
+                        .addComponent(descriptionScroll)));
         }//initLayout
         private boolean isRecordValid(){
             return causalValid && amountValid && descriptionValid;
-        }//isRecordValid
+        }//isRecordvalid
         private void addRecord(){
             if(isRecordValid()){
                 Transaction tmp = new Transaction();
@@ -270,4 +257,5 @@ public class DatePanel extends JPanel{
             }
         }//addRecord
     }//RecordPanel
-}//DatePanel
+
+}//CausalPanel

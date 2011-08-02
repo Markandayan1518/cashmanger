@@ -291,12 +291,14 @@ public class Transaction extends CashManagerDB{
         return arr;
     }//getAllCausal
     public static void main(String args[]){
-
-//        Transaction.deleteTable(checkTab, deleteTab);
+        Scanner s = new Scanner(System.in);
+        System.out.print("Delete table? y/n ");
+        if(s.nextLine().equals("y")){
+            Transaction.deleteTable(checkTab, deleteTab);
+        }
 //        Transaction.dropTable(checkTab, dropTable);
         Transaction.createTable(checkTab, createTab);
         System.out.print("Insert a new transaction causal or exit to quit: ");
-        Scanner s = new Scanner(System.in);
         String tmp = s.nextLine();
         List<Transaction> list = new ArrayList<Transaction>();
         while(!tmp.equals("exit")){
@@ -329,7 +331,6 @@ public class Transaction extends CashManagerDB{
         Transaction.printTransactionList(Transaction.getAllTransaction());
         Transaction.shutdown();
         System.out.println("Main finisched.");
-
-    }
+    }//main
 
 }//Transaction

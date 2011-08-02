@@ -32,19 +32,19 @@ public class TransactionPanel extends JPanel{
     //Dialog fields
     private JPanel fieldPanel;
     private JLabel causalLabel;
-    private JComboBox causalBox;
+    private JComboBox causalField;
     private JLabel amountLabel;
     private JTextField amountField;
     private JLabel dateLabel;
     private JDateChooser dateField;
     private JLabel descriptionLabel;
     private JTextArea descriptionArea;
-    private JScrollPane descPane;
+    private JScrollPane descriptionPane;
 
     //Commands fields
     private JPanel commandPanel;
-    private JButton okButton;
-    private JButton cancelButton;
+    private JButton insertButton;
+    private JButton resetButton;
 
     public TransactionPanel(){
         this(new JDialog(), true);
@@ -54,13 +54,12 @@ public class TransactionPanel extends JPanel{
         setLayout(new BorderLayout());
         this.dialog = dialog;
         this.type = type;
-        initFields();
-        initCommands();
+        initFieldPanel();
+        initCommandPanel();
         add(fieldPanel, BorderLayout.CENTER);
         add(commandPanel, BorderLayout.SOUTH);
 
-        this.dialog.add(this);
-        printInfo();
+//        printInfo();
     }
     public JDialog getDialog(){
         return dialog;
@@ -71,18 +70,12 @@ public class TransactionPanel extends JPanel{
         System.out.println(this.getMaximumSize());
         System.out.println(this.getMinimumSize());
     }//printInfo
-    private final void initFields(){
-        fieldPanel = new JPanel();
-        GroupLayout layout = new GroupLayout(fieldPanel);
-        layout.setAutoCreateContainerGaps(true);
-        layout.setAutoCreateGaps(true);
-        fieldPanel.setLayout(layout);
-
+    private final void initFieldPanel(){
         causalLabel = new JLabel("Causal:");
         causalLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         List<String> causalList = Transaction.getAllCausal();
-        causalBox = new JComboBox(causalList.toArray());
-        causalBox.setEditable(true);
+        causalField = new JComboBox(causalList.toArray());
+        causalField.setEditable(true);
         amountLabel = new JLabel("Amount:");
         amountLabel.setHorizontalAlignment(SwingConstants.RIGHT);
         amountField = new JTextField(15);
@@ -94,8 +87,16 @@ public class TransactionPanel extends JPanel{
         descriptionArea = new JTextArea(5, 15);
         descriptionArea.setLineWrap(true);
         descriptionArea.setWrapStyleWord(true);
-        descPane = new JScrollPane(descriptionArea);
+        descriptionPane = new JScrollPane(descriptionArea);
 
+        initFieldPanelLayout();
+    }//initFieldPanle
+    private void initFieldPanelLayout(){
+        fieldPanel = new JPanel();
+        GroupLayout layout = new GroupLayout(fieldPanel);
+        layout.setAutoCreateContainerGaps(true);
+        layout.setAutoCreateGaps(true);
+        fieldPanel.setLayout(layout);
 
         layout.setHorizontalGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
@@ -104,15 +105,15 @@ public class TransactionPanel extends JPanel{
                 .addComponent(dateLabel)
                 .addComponent(descriptionLabel))
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                .addComponent(causalBox)
+                .addComponent(causalField)
                 .addComponent(amountField)
                 .addComponent(dateField)
-                .addComponent(descPane)));
+                .addComponent(descriptionPane)));
 
         layout.setVerticalGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                 .addComponent(causalLabel)
-                .addComponent(causalBox))
+                .addComponent(causalField))
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                 .addComponent(amountLabel)
                 .addComponent(amountField))
@@ -121,25 +122,24 @@ public class TransactionPanel extends JPanel{
                 .addComponent(dateField))
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
                 .addComponent(descriptionLabel)
-                .addComponent(descPane)));
-
-    }//initFields
-    private final void initCommands(){
+                .addComponent(descriptionPane)));
+    }//initFieldPanelLayout
+    private final void initCommandPanel(){
         commandPanel = new JPanel();
 
-        okButton = new JButton("OK");
-        okButton.addActionListener(new ActionListener(){
+        insertButton = new JButton("Insert");
+        insertButton.addActionListener(new ActionListener(){
 
             public void actionPerformed(ActionEvent e){
                 Transaction trans = new Transaction();
-                trans.setCausal((String) causalBox.getSelectedItem());
+                trans.setCausal((String) causalField.getSelectedItem());
                 trans.setAmount(Double.parseDouble(amountField.getText()));
                 trans.setTransactionDate(dateField.getCalendar());
                 trans.setDescription(descriptionArea.getText());
                 if(type){
-                    trans.setType("in");
+                    trans.setType(Transaction.IN);
                 }else{
-                    trans.setType("out");
+                    trans.setType(Transaction.OUT);
                 }
 
                 List<Transaction> list = new ArrayList<Transaction>();
@@ -149,22 +149,30 @@ public class TransactionPanel extends JPanel{
             }
         });
 
-        cancelButton = new JButton("Cancel");
-        cancelButton.addActionListener(new ActionListener(){
+        resetButton = new JButton("Reset");
+        resetButton.addActionListener(new ActionListener(){
 
             public void actionPerformed(ActionEvent e){
-                dialog.dispose();
+                resetFields();
             }
         });
 
-        commandPanel.add(okButton);
-        commandPanel.add(cancelButton);
-    }//initCommands
+        commandPanel.add(insertButton);
+        commandPanel.add(resetButton);
+    }//initCommandPanel
+    private void resetFields(){
+        List<String> causalList = Transaction.getAllCausal();
+        causalField = new JComboBox(causalList.toArray());
+        causalField.setEditable(true);
+        amountField.setText("");
+        descriptionArea.setText("");
+    }
     public static void main(String args[]){
         TransactionPanel t = new TransactionPanel();
-        t.getDialog().pack();
         t.getDialog().setVisible(true);
         t.getDialog().setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        t.getDialog().add(t);
+        t.getDialog().pack();
     }//main
 
 }//TransactionPanel

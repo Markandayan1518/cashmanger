@@ -31,10 +31,10 @@ public class DayReport extends CashManagerDB{
     private static final String deleteTab = "delete from dayReport";
     private static final String dropTable = "drop table dayReport";
     private static final String checkTab = "select * from dayReport";
-    private static final String insertInto = "insert into dayReport" +
+    private static final String insertInto = "insert into dayReport " +
                     "(day, income, outcome) values ";
-    private static final String updateRow = "update dayReport"
-            + "set income=income + ? , outcome=outcome + ? where day= ?";
+    private static String updateRow = "update dayReport "
+            + "set income = income + ?, outcome = outcome + ? where day = ?";
 
     public void setDay(Date day){
         this.day = day;
@@ -60,6 +60,9 @@ public class DayReport extends CashManagerDB{
     }
     public double getOutcome(){
         return outcome;
+    }
+    public int isPositive(){
+        return Double.compare(income, outcome);
     }
     @Override
     public String toString(){
@@ -141,15 +144,15 @@ public class DayReport extends CashManagerDB{
 
         return arr;
     }//getAllDayReport
-    public static List<DayReport> getDayReportBetween(DayReport d1, DayReport d2){
+    public static List<DayReport> getDayReportBetween(Date d1, Date d2){
         Connection conn = getConnection();
         PreparedStatement ps = null;
         ResultSet rs = null;
         ArrayList<DayReport> arr = new ArrayList<DayReport>();
         try{
-            ps = conn.prepareStatement("select * from dayReport where day >= ? and day <= ?");
-            ps.setDate(1, new java.sql.Date(d1.getTimeInMillis()));
-            ps.setDate(2, new java.sql.Date(d2.getTimeInMillis()));
+            ps = conn.prepareStatement("select * from dayReport where day >= ? and day <= ? order by day");
+            ps.setDate(1, new java.sql.Date(d1.getTime()));
+            ps.setDate(2, new java.sql.Date(d2.getTime()));
             rs = ps.executeQuery();
             while(rs.next()){
                 DayReport dr = new DayReport();
@@ -275,13 +278,16 @@ public class DayReport extends CashManagerDB{
         }
     }//updateOrInsert
     public static void main(String args[]){
-//        DayReport.deleteTable(checkTab, deleteTab);
+        Scanner scan = new Scanner(System.in);
+        System.out.print("Delete table? y/n ");
+        if(scan.nextLine().equals("y")){
+            DayReport.deleteTable(checkTab, deleteTab);
+        }
 //        DayReport.dropTable(checkTab, dropTable);
         DayReport.createTable(checkTab, createTab);
         Connection conn = getConnection();
         try{
             conn.setAutoCommit(false);
-            Scanner scan = new Scanner(System.in);
             System.out.println("Enter 1 to continue or exit to quit.");
             String s = scan.nextLine();
             while(!s.equals("exit")){
@@ -308,6 +314,6 @@ public class DayReport extends CashManagerDB{
         }
         DayReport.printDayReportList(DayReport.getAllDayReport());
         DayReport.shutdown();
-    }
+    }//main
 
 }//DayReport

@@ -1,5 +1,4 @@
 
-
 package cashmanager.calendar;
 
 import java.awt.BorderLayout;
@@ -19,7 +18,7 @@ import javax.swing.event.ChangeListener;
  *
  * @author Kiko
  */
-public class JCalendar extends JPanel implements ItemListener, ChangeListener, PropertyChangeListener{
+public class JCalendar extends JPanel implements PropertyChangeListener{
 
     private JDayChooser dayChooser;
     private JMonthChooser monthChooser;
@@ -27,11 +26,14 @@ public class JCalendar extends JPanel implements ItemListener, ChangeListener, P
     private Calendar calendar;
 
     public JCalendar(){
+        this(true, false);
+    }
+    public JCalendar(boolean weekVisible, boolean summary){
         super();
         setName("JCalendar");
         setLayout(new BorderLayout());
         calendar = Calendar.getInstance();
-        dayChooser = new JDayChooser();
+        dayChooser = new JDayChooser(weekVisible, summary);
         dayChooser.addPropertyChangeListener(this);
         monthChooser = new JMonthChooser();
         monthChooser.addPropertyChangeListener(this);
@@ -72,19 +74,6 @@ public class JCalendar extends JPanel implements ItemListener, ChangeListener, P
         monthChooser.setNewFont(font);
         dayChooser.setNewFont(font);
     }
-
-    public void itemStateChanged(ItemEvent e) {
-//        if(e.getStateChange() == ItemEvent.SELECTED){
-//            int month = monthChooser.getMonthBox().getSelectedIndex();
-//            dayChooser.setMonth(month);
-//            dayChooser.setMonth(monthChooser.getMonth());
-//        }
-    }
-
-    public void stateChanged(ChangeEvent e) {
-//        dayChooser.setYear(yearChooser.getCurrentValue());
-    }
-
     public void propertyChange(PropertyChangeEvent evt) {
         if(evt.getPropertyName().equals("year")){
             int newYear = (Integer)evt.getNewValue();
@@ -101,13 +90,12 @@ public class JCalendar extends JPanel implements ItemListener, ChangeListener, P
             calendar.set(Calendar.DAY_OF_MONTH, newDay);
             firePropertyChange("calendar", oldDay, newDay);
         }
-    }
-
+    }//propertyChanged
     public static void main(String args[]){
         JFrame frame = new JFrame("JCalendar");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(new JCalendar());
+        frame.add(new JCalendar(false, true));
         frame.pack();
         frame.setVisible(true);
-    }
+    }//main
 }//JCalendar

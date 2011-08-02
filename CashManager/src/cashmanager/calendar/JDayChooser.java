@@ -2,6 +2,7 @@
 
 package cashmanager.calendar;
 
+import cashmanager.database.DayReport;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
@@ -12,6 +13,8 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.text.DateFormatSymbols;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -23,6 +26,8 @@ import javax.swing.JPanel;
  */
 public class JDayChooser extends JPanel implements ActionListener{
 
+    public static final String DEFAULT_TYPE = "default";
+    public static final String SUMMARY_TYPE = "summary";
     private JPanel dayPanel;
     private JPanel weekPanel;
     private JButton[] dayButtons;
@@ -36,25 +41,29 @@ public class JDayChooser extends JPanel implements ActionListener{
     private int month;
     private int year;
     private int numberOfWeeks;
+    private int daysInMonth;
+    private int firstDayIndex;
+    private boolean summary;
 
     public JDayChooser(){
-        this(true);
+        this(true, false);
     }
-    public JDayChooser(boolean weekVisible){
+    public JDayChooser(boolean weekVisible, boolean summary){
         super();
         setName("JDayChooser");
         setLayout(new BorderLayout());
         locale = Locale.getDefault();
-        today = Calendar.getInstance(locale);
         calendar = Calendar.getInstance(locale);
         calendar.set(Calendar.HOUR, 0);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
+        today = (Calendar) calendar.clone();
         day = calendar.get(Calendar.DAY_OF_MONTH);
         month = calendar.get(Calendar.MONTH);
         year = calendar.get(Calendar.YEAR);
         this.weekVisible = weekVisible;
+        this.summary = summary;
         dayButtons = new JButton[49];
         dayPanel = new JPanel();
         dayPanel.setLayout(new GridLayout(7, 7));
@@ -79,10 +88,6 @@ public class JDayChooser extends JPanel implements ActionListener{
             weekPanel.add(weekNumbers[i]);
         }
         init();
-
-        add(dayPanel, BorderLayout.CENTER);
-        add(weekPanel, BorderLayout.LINE_START);
-
     }
     private JButton createDecorationButton(){
         JButton button = new JButton();
@@ -98,40 +103,20 @@ public class JDayChooser extends JPanel implements ActionListener{
             button.removeMouseMotionListener(m);
         }
         return button;
-    }
-
+    }//createDecorationButton
     public void init(){
         initDayPanel();
         initWeekPanel();
 //        setNewFont(new Font(Font.DIALOG, Font.PLAIN, 9));
-    }
-
-    public void setNumberOfWeeks(){
-        Calendar tmp = (Calendar)calendar.clone();
-        tmp.set(Calendar.DAY_OF_MONTH, 1);
-        int firstDayOfWeek = tmp.getFirstDayOfWeek();
-        int dayOfWeek = tmp.get(Calendar.DAY_OF_WEEK);
-        int firstDay = dayOfWeek - firstDayOfWeek;
-        if(firstDay < 0){
-            firstDay += 7;
-        }
-        int daysInFirstWeek = 7 - firstDay;
-        tmp.add(Calendar.MONTH, 1);
-        tmp.add(Calendar.DAY_OF_MONTH, -1);
-        int daysInMonth = tmp.get(Calendar.DAY_OF_MONTH);
-        int remDays = daysInMonth - daysInFirstWeek;
-
-        numberOfWeeks = (remDays / 7) + 1;
-        if((remDays % 7) != 0){
-            numberOfWeeks++;
-        }
-    }//setNumberOfWeeks
-
+    }//init
     public void initDayPanel(){
         initDayNames();
         initDayNumbers();
+        if(summary){
+            initDayNumbersFigure();
+        }
+        add(dayPanel, BorderLayout.CENTER);
     }//initDayPanel
-
     public void initDayNames(){
         int firstDayOfWeek = Calendar.getInstance(locale).getFirstDayOfWeek();
         int dayOfWeek = firstDayOfWeek;
@@ -146,26 +131,25 @@ public class JDayChooser extends JPanel implements ActionListener{
             }
         }
     }//initDayNames
-
     public void initDayNumbers(){
         Calendar tmp = (Calendar)calendar.clone();
         tmp.set(Calendar.DAY_OF_MONTH, 1);
         int firstDayOfWeek = tmp.getFirstDayOfWeek();
         int dayOfWeek = tmp.get(Calendar.DAY_OF_WEEK);
-        int firstDay = dayOfWeek - firstDayOfWeek;
-        if(firstDay < 0){
-            firstDay += 7;
+        firstDayIndex = dayOfWeek - firstDayOfWeek;
+        if(firstDayIndex < 0){
+            firstDayIndex += 7;
         }
         int i = 7;
         int j;
-        for(j = 0; j < firstDay; j++){
+        for(j = 0; j < firstDayIndex; j++){
             dayButtons[i].setText("");
             dayButtons[i].setVisible(false);
             i++;
         }
         tmp.add(Calendar.MONTH, 1);
         tmp.add(Calendar.DAY_OF_MONTH, -1);
-        int daysInMonth = tmp.get(Calendar.DAY_OF_MONTH);
+        daysInMonth = tmp.get(Calendar.DAY_OF_MONTH);
         for(j = 1; j <= daysInMonth; j++){
             dayButtons[i].setText(Integer.toString(j));
             dayButtons[i].setVisible(true);
@@ -175,8 +159,7 @@ public class JDayChooser extends JPanel implements ActionListener{
             dayButtons[i].setText("");
             dayButtons[i].setVisible(false);
         }
-    }
-
+    }//initDayNumbers
     public void initWeekPanel(){
         setNumberOfWeeks();
         Calendar tmp = (Calendar)calendar.clone();
@@ -200,15 +183,76 @@ public class JDayChooser extends JPanel implements ActionListener{
             add(weekPanel, BorderLayout.LINE_START);
         }
     }//initWeekPanel
+    public void setNumberOfWeeks(){
+        Calendar tmp = (Calendar)calendar.clone();
+        tmp.set(Calendar.DAY_OF_MONTH, 1);
+        int firstDayOfWeek = tmp.getFirstDayOfWeek();
+        int dayOfWeek = tmp.get(Calendar.DAY_OF_WEEK);
+        int firstDay = dayOfWeek - firstDayOfWeek;
+        if(firstDay < 0){
+            firstDay += 7;
+        }
+        int daysInFirstWeek = 7 - firstDay;
+        tmp.add(Calendar.MONTH, 1);
+        tmp.add(Calendar.DAY_OF_MONTH, -1);
+        int daysInMonth = tmp.get(Calendar.DAY_OF_MONTH);
+        int remDays = daysInMonth - daysInFirstWeek;
 
+        numberOfWeeks = (remDays / 7) + 1;
+        if((remDays % 7) != 0){
+            numberOfWeeks++;
+        }
+    }//setNumberOfWeeks
     public void updatePane(){
         initDayNumbers();
         initWeekPanel();
-    }
-
+        if(summary){
+            initDayNumbersFigure();
+        }
+    }//updatePane
+    public void initDayNumbersFigure(){
+        Calendar tmp = (Calendar)calendar.clone();
+        tmp.set(Calendar.HOUR_OF_DAY, 0);
+        tmp.set(Calendar.MINUTE, 0);
+        tmp.set(Calendar.SECOND, 0);
+        tmp.set(Calendar.MILLISECOND, 0);
+        tmp.set(Calendar.DAY_OF_MONTH, 1);
+        Date firstDay = tmp.getTime();
+        tmp.add(Calendar.MONTH, 1);
+        tmp.add(Calendar.DAY_OF_MONTH, -1);
+        Date lastDay = tmp.getTime();
+        List<DayReport> list = DayReport.getDayReportBetween(firstDay, lastDay);
+        int index = firstDayIndex + 7;
+        tmp.setTime(firstDay);
+        for(int i = 0; i< daysInMonth; i++){
+            boolean found = false;
+            for(DayReport dayTmp : list){
+                if(tmp.getTime().equals(dayTmp.getDay())){
+                    found = true;
+                    switch(dayTmp.isPositive()){
+                        case -1:
+                            dayButtons[index].setBackground(Color.RED);
+                            break;
+                        case 0:
+                            dayButtons[index].setBackground(Color.WHITE);
+                            break;
+                        case 1:
+                            dayButtons[index].setBackground(Color.BLUE);
+                            break;
+                    }
+                    break;
+                }
+            }
+            if(!found){
+                dayButtons[index].setBackground(Color.WHITE);
+            }
+            tmp.add(Calendar.DAY_OF_MONTH, 1);
+            index++;
+        }
+    }//initDayNumbersFigure
     public void setDay(int newDay){
         setDay(newDay, true);
-    }
+    }//setDay
     public void setDay(int newDay, boolean firePropertyEvent){
         int oldDay = day;
         day = newDay;
@@ -218,21 +262,21 @@ public class JDayChooser extends JPanel implements ActionListener{
         if(firePropertyEvent){
             firePropertyChange("day", oldDay, day);
         }
-    }
+    }//setDay
     public void setMonth(int newMonth){
         int oldMonth = month;
         month = newMonth;
         calendar.set(Calendar.MONTH, month);
         calendar.getTime();
         updatePane();
-    }
+    }//setMonth
     public void setYear(int newYear){
         int oldYear = year;
         year = newYear;
         calendar.set(Calendar.YEAR, year);
         calendar.getTime();
         updatePane();
-    }
+    }//setYear
     public void setNewFont(Font font){
         super.setFont(font);
         for(JButton b : dayButtons){
@@ -241,19 +285,17 @@ public class JDayChooser extends JPanel implements ActionListener{
         for(JButton b : weekNumbers){
             b.setFont(font);
         }
-    }
-
+    }//setNewFont
     public void actionPerformed(ActionEvent e){
         selectedDay = (JButton)e.getSource();
         int day = Integer.parseInt(selectedDay.getText());
         setDay(day);
         System.out.println(day);
-    }
-
+    }//actionPerformed
     public static void main(String args[]){
         JFrame frame = new JFrame("JDayChooser");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.add(new JDayChooser());
+        frame.add(new JDayChooser(false, true));
         frame.pack();
         frame.setVisible(true);
     }

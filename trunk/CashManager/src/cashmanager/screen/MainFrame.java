@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package cashmanager.screen;
 
@@ -25,12 +21,13 @@ public class MainFrame extends JFrame{
     public MainFrame(){
         super("CashManager");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setVisible(true);
+        
         initToolBar();
         centerPane = new SummaryScreen();
         add(toolBar, BorderLayout.PAGE_START);
         add(centerPane, BorderLayout.CENTER);
         pack();
+        setVisible(true);
     }
     private void initToolBar(){
         toolBar = new JToolBar("ToolBar");

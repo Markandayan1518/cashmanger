@@ -80,15 +80,20 @@ public class JDateChooser extends JPanel implements PropertyChangeListener, Acti
     public long getTimeInMillis(){
         return calendar.getTimeInMillis();
     }
+    public void setCalendar(Calendar date){
+        jCalendar.setCalendar(date);
+    }
 
     public void propertyChange(PropertyChangeEvent evt) {
         if(evt.getPropertyName().equals("calendar") && jCalendar.getYearChooser().isCorrect()){
             Date tmpDate = jCalendar.getCalendar().getTime();
             String newDate = df.format(tmpDate);
+            Calendar oldValue = (Calendar) calendar.clone();
             calendar.setTime(tmpDate);
             textField.setText(newDate);
             dateSelected = true;
             popMenu.setVisible(false);
+            firePropertyChange("JDateChooser", oldValue, calendar);
         }
     }
 

@@ -3,6 +3,7 @@
 package cashmanager.calendar;
 
 import cashmanager.database.DayReport;
+import cashmanager.toolkit.DateToolkit;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Font;
@@ -54,10 +55,7 @@ public class JDayChooser extends JPanel implements ActionListener{
         setLayout(new BorderLayout());
         locale = Locale.getDefault();
         calendar = Calendar.getInstance(locale);
-        calendar.set(Calendar.HOUR, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
+        DateToolkit.resetTime(calendar);
         today = (Calendar) calendar.clone();
         day = calendar.get(Calendar.DAY_OF_MONTH);
         month = calendar.get(Calendar.MONTH);
@@ -212,22 +210,18 @@ public class JDayChooser extends JPanel implements ActionListener{
     }//updatePane
     public void initDayNumbersFigure(){
         Calendar tmp = (Calendar)calendar.clone();
-        tmp.set(Calendar.HOUR_OF_DAY, 0);
-        tmp.set(Calendar.MINUTE, 0);
-        tmp.set(Calendar.SECOND, 0);
-        tmp.set(Calendar.MILLISECOND, 0);
+        DateToolkit.resetTime(tmp);
         tmp.set(Calendar.DAY_OF_MONTH, 1);
-        Date firstDay = tmp.getTime();
+        Calendar firstDay = (Calendar)tmp.clone();
         tmp.add(Calendar.MONTH, 1);
         tmp.add(Calendar.DAY_OF_MONTH, -1);
-        Date lastDay = tmp.getTime();
+        Calendar lastDay = (Calendar)tmp.clone();
         List<DayReport> list = DayReport.getDayReportBetween(firstDay, lastDay);
         int index = firstDayIndex + 7;
-        tmp.setTime(firstDay);
         for(int i = 0; i< daysInMonth; i++){
             boolean found = false;
             for(DayReport dayTmp : list){
-                if(tmp.getTime().equals(dayTmp.getDay())){
+                if(firstDay.equals(dayTmp.getDay())){
                     found = true;
                     switch(dayTmp.isPositive()){
                         case -1:
@@ -246,10 +240,16 @@ public class JDayChooser extends JPanel implements ActionListener{
             if(!found){
                 dayButtons[index].setBackground(Color.WHITE);
             }
-            tmp.add(Calendar.DAY_OF_MONTH, 1);
+            firstDay.add(Calendar.DAY_OF_MONTH, 1);
             index++;
         }
     }//initDayNumbersFigure
+    public void setDate(Calendar date){
+        calendar.setTimeInMillis(date.getTimeInMillis());
+        setYear(calendar.get(Calendar.YEAR));
+        setMonth(calendar.get(Calendar.MONTH));
+        setDay(calendar.get(Calendar.DAY_OF_MONTH));
+    }//setDate
     public void setDay(int newDay){
         setDay(newDay, true);
     }//setDay

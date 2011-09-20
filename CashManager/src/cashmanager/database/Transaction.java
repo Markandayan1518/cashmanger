@@ -11,7 +11,9 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 
@@ -27,10 +29,8 @@ public class Transaction extends CashManagerDB{
     private Calendar transactionDate;
     private String description;
     private String type;
-
     public static final String IN = "in";
     public static final String OUT = "out";
-
     private static final String createTab = "create table transactions " +
             "(idtrans bigint not null generated always as identity primary key, " +
             "causal varchar(150) not null , " +
@@ -290,6 +290,64 @@ public class Transaction extends CashManagerDB{
 
         return arr;
     }//getAllCausal
+    private static List<CausalAmount> getCausalAmount(Calendar fromDate, Calendar toDate, boolean type){
+        Connection conn = getConnection();
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        List<CausalAmount> list = new ArrayList<CausalAmount>();
+        String statement = "select causal, sum(amount) from transactions where "
+                + "transaction_date >= ? and transaction_date <= ? and type = ? group by causal";
+        String typeInOut = "";
+        if(type){
+            typeInOut = Transaction.IN;
+        }else{
+            typeInOut = Transaction.OUT;
+        }
+        try{
+            ps = conn.prepareStatement(statement);
+            ps.setDate(1, new Date(fromDate.getTimeInMillis()));
+            ps.setDate(2, new Date(toDate.getTimeInMillis()));
+            ps.setString(3, typeInOut);
+            rs = ps.executeQuery();
+            while(rs.next()){
+                CausalAmount c = new CausalAmount();
+                c.setCausal(rs.getString(1));
+                c.setTotalAmount(rs.getDouble(2));
+                list.add(c);
+            }
+        }catch(SQLException ex){
+            System.err.println("SQLException thrown in class" + Transaction.class.getName());
+            System.err.println(ex.getMessage());
+            ex.printStackTrace();
+        }
+
+        finally{
+            try{
+                if(rs != null){
+                    rs.close();
+                }
+                if(ps != null){
+                    ps.close();
+                }
+                disconnect(conn);
+            }catch(SQLException ex){
+                System.err.println(ex.getMessage());
+                ex.printStackTrace();
+            }
+        }//finally
+
+        CausalAmount[] t = list.toArray(new CausalAmount[0]);
+        Arrays.sort(t);
+        list = Arrays.asList(t);
+        Collections.reverse(list);
+        return list;
+    }//getCausalAmount
+    public static List<CausalAmount> getCausalTotalIncome(Calendar fromDate, Calendar toDate){
+        return getCausalAmount(fromDate, toDate, true);
+    }//getCausalTotalIncome
+    public static List<CausalAmount> getCausalTotalOutcome(Calendar fromDate, Calendar toDate){
+        return getCausalAmount(fromDate, toDate, false);
+    }//getCausalTotalOutcome
     public static void main(String args[]){
         Scanner s = new Scanner(System.in);
         System.out.print("Delete table? y/n ");

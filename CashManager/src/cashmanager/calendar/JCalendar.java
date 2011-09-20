@@ -74,6 +74,11 @@ public class JCalendar extends JPanel implements PropertyChangeListener{
         monthChooser.setNewFont(font);
         dayChooser.setNewFont(font);
     }
+    public void setCalendar(Calendar date){
+        yearChooser.setValue(date.get(Calendar.YEAR));
+        monthChooser.setMonth(date.get(Calendar.MONTH));
+        dayChooser.setDay(date.get(Calendar.DAY_OF_MONTH));
+    }
     public void propertyChange(PropertyChangeEvent evt) {
         if(evt.getPropertyName().equals("year")){
             int newYear = (Integer)evt.getNewValue();

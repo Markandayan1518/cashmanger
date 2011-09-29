@@ -117,7 +117,7 @@ public class CashManagerDB {
                     s.close();
                 }
                 disconnect(conn);
-                System.err.println("Disconnected in createTable.");
+                System.out.println("Disconnected in createTable.");
             }catch(SQLException ex){
                 System.err.println("SQLException thrown in class" + CashManagerDB.class.getName());
                 System.err.println(ex.getMessage());
@@ -144,7 +144,7 @@ public class CashManagerDB {
                     s.close();
                 }
                 disconnect(conn);
-                System.err.println("Disconnected in deleteTable.");
+                System.out.println("Disconnected in deleteTable.");
             }catch(SQLException ex){
                 System.err.println("SQLException thrown in class" + CashManagerDB.class.getName());
                 System.err.println(ex.getMessage());
@@ -171,7 +171,7 @@ public class CashManagerDB {
                     s.close();
                 }
                 disconnect(conn);
-                System.err.println("Disconnected in dropTable.");
+                System.out.println("Disconnected in dropTable.");
             }catch(SQLException ex){
                 System.err.println("SQLException thrown in class" + CashManagerDB.class.getName());
                 System.err.println(ex.getMessage());

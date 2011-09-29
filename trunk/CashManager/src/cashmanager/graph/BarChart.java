@@ -9,6 +9,7 @@ import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -23,8 +24,10 @@ import java.beans.PropertyChangeListener;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Currency;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import javax.swing.GroupLayout;
@@ -34,6 +37,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.border.TitledBorder;
 
 /**
  *
@@ -46,6 +50,7 @@ public class BarChart extends JPanel{
     private JScrollPane scroll;
     private InnerPane innerPane;
     private CommandPane commandPane;
+    private DetailPane detailPane;
 
     public BarChart(){
         this(new JDialog(), true);
@@ -57,8 +62,10 @@ public class BarChart extends JPanel{
         scroll = new JScrollPane(innerPane);
         scroll.setPreferredSize(new Dimension(400, 450));
         commandPane = new CommandPane();
+        detailPane = new DetailPane();
         add(scroll, BorderLayout.CENTER);
         add(commandPane, BorderLayout.PAGE_START);
+        add(detailPane, BorderLayout.PAGE_END);
         this.dialog = dialog;
         this.modal = modal;
     }
@@ -101,9 +108,14 @@ public class BarChart extends JPanel{
         private List<Rectangle2D> incomeList;
         private List<Rectangle2D> outcomeList;
         private Graphics2D g2;
+        private int dayReportIndex;
+        private String inOrOut;
+        private List<String> dayList;
+        private Point mouseClick;
 
         public InnerPane(){
             super();
+            setBorder(new TitledBorder("BarChart"));
             inVisible = true;
             outVisible = true;
             initDates();
@@ -127,6 +139,7 @@ public class BarChart extends JPanel{
         }
         private void updateFields(){
             initDayReportList();
+            updateDayList();
             updateMaxValue();
             updateDimension();
             updateIncomes();
@@ -135,6 +148,7 @@ public class BarChart extends JPanel{
         private void initDayReportList(){
             numberOfDays = DateToolkit.daysBetween(fromDate, toDate);
             dayRepValid = false;
+            dayReportIndex = -1;
             if(numberOfDays > 0){
                 dayRep = DayReport.getDayReportBetween(fromDate, toDate);
                 dayRepValid = true;
@@ -230,6 +244,41 @@ public class BarChart extends JPanel{
                 }
             }
         }
+        private void updateDayList(){
+            if(dayRepValid){
+                DateFormat df = DateFormat.getDateInstance(DateFormat.SHORT);
+                dayList = new ArrayList<String>();
+                for(DayReport d : dayRep){
+                    String stringDate = df.format(d.getTime());
+                    dayList.add(stringDate);
+                }
+            }
+        }
+        private boolean searchForHighlight(){
+            Rectangle2D in;
+            Rectangle2D out;
+            boolean found = false;
+            for(int i = 0; i <  numberOfDays; i++){
+                in = incomeList.get(i);
+                out = outcomeList.get(i);
+                if(in.contains(mouseClick) && inVisible){
+                    dayReportIndex = i;
+                    inOrOut = Transaction.IN;
+                    found = true;
+                    break;
+                }else if(out.contains(mouseClick) && outVisible){
+                    dayReportIndex = i;
+                    inOrOut = Transaction.OUT;
+                    found = true;
+                    break;
+                }
+            }
+            if(!found){
+                dayReportIndex = -1;
+                inOrOut = "";
+            }
+            return found;
+        }
         @Override
         public void paintComponent(Graphics g){
             super.paintComponent(g);
@@ -277,6 +326,8 @@ public class BarChart extends JPanel{
             initGraph();
             drawIncomes();
             drawOutcomes();
+            highlightRect();
+            drawPopupRect();
         }
         private void drawIncomes(){
             if(dayRepValid && inVisible){
@@ -302,10 +353,8 @@ public class BarChart extends JPanel{
             if(dayRepValid){
                 boolean stringUp = false;
                 int xString = OFFSET_WIDTH;
-                DateFormat df = DateFormat.getDateInstance(DateFormat.SHORT);
-                for(DayReport d : dayRep){
+                for(String stringDate : dayList){
                     int yString = Y_AXIS + DAY_STRING_HEIGHT;
-                    String stringDate = df.format(d.getTime());
                     if(stringUp){
                         yString += DAY_STRING_HEIGHT;
                     }
@@ -315,62 +364,62 @@ public class BarChart extends JPanel{
                 }
             }
         }
+        private void highlightRect(){
+            if(dayRepValid){
+                if(dayReportIndex != -1){
+                    Rectangle2D highlight;
+                    if(inOrOut.equals(Transaction.IN)){
+                        highlight = incomeList.get(dayReportIndex);
+                        g2.setColor(GraphColors.IN_COLOR);
+                    }else{
+                        highlight = outcomeList.get(dayReportIndex);
+                        g2.setColor(GraphColors.OUT_COLOR);
+                    }
+                    g2.fill(highlight);
+                    g2.setColor(Color.BLACK);
+                    g2.setStroke(new BasicStroke(2.0f));
+                    g2.draw(highlight);
+                    g2.setStroke(new BasicStroke(1.0f));
+                }
+            }
+        }
+        private void drawPopupRect(){
+            if(dayRepValid && dayReportIndex != -1){
+                FontMetrics fm = g2.getFontMetrics();
+                String currency = Currency.getInstance(Locale.getDefault()).getSymbol();
+                double value;
+                if(inOrOut.equals(Transaction.IN)){
+                    value = dayRep.get(dayReportIndex).getIncome();
+                }else{
+                    value = dayRep.get(dayReportIndex).getOutcome();
+                }
+                String amount = String.format("%.2f%s", value, currency);
+                double detailWidth = fm.stringWidth(amount) + 20;
+                Rectangle2D detail = new Rectangle2D.Double(mouseClick.getX(), mouseClick.getY() - DETAIL_HEIGHT, detailWidth, DETAIL_HEIGHT);
+                g2.setColor(Color.WHITE);
+                g2.fill(detail);
+                g2.setColor(Color.BLACK);
+                g2.draw(detail);
+                if(inOrOut.equals(Transaction.IN)){
+                    g2.setColor(GraphColors.IN_COLOR);
+                }
+                if(inOrOut.equals(Transaction.OUT)){
+                    g2.setColor(GraphColors.OUT_COLOR);
+                }
+                g2.drawString(amount, (float) mouseClick.getX() + 10, (float) mouseClick.getY() - 5);
+                g2.setColor(Color.BLACK);
+            }
+        }
         public void mouseClicked(MouseEvent e){
         }
         public void mousePressed(MouseEvent e){
             repaint();
         }
         public void mouseReleased(MouseEvent e){
-            boolean found = false;
-            String type = "";
-            Point mouseClick = e.getPoint();
-            Rectangle2D detail = new Rectangle2D.Double(e.getX(), e.getY(), DETAIL_WIDTH, DETAIL_HEIGHT);
-            Graphics2D g = (Graphics2D) getGraphics();
-            String value = "";
-            Set<Rectangle2D> incomeSet = incomeMap.keySet();
-            for(Rectangle2D r : incomeSet){
-                if(r.contains(mouseClick)){
-                    found = true;
-                    DayReport tmp = incomeMap.get(r);
-                    value = String.format("%.2f", tmp.getIncome());
-                    type = Transaction.IN;
-                    g.setColor(GraphColors.IN_COLOR);
-                    g.fill(r);
-                    g.setColor(Color.BLACK);
-                    g.setStroke(new BasicStroke(2.0f));
-                    g.draw(r);
-                }
-            }
-            Set<Rectangle2D> outcomeSet = outcomeMap.keySet();
-            for(Rectangle2D r : outcomeSet){
-                if(r.contains(mouseClick)){
-                    found = true;
-                    DayReport tmp = outcomeMap.get(r);
-                    value = String.format("%.2f€", tmp.getOutcome());
-                    type = Transaction.OUT;
-                    g.setColor(GraphColors.OUT_COLOR);
-                    g.fill(r);
-                    g.setColor(Color.BLACK);
-                    g.setStroke(new BasicStroke(2.0f));
-                    g.draw(r);
-                }
-            }
-            if(found){
-                g.setColor(Color.WHITE);
-                g.fill(detail);
-                g.setColor(Color.BLACK);
-                g.draw(detail);
-                if(type.equals(Transaction.IN)){
-                    g.setColor(GraphColors.IN_COLOR);
-                }
-                if(type.equals(Transaction.OUT)){
-                    g.setColor(GraphColors.OUT_COLOR);
-                }
-                g.drawString(value, e.getX() + 5, e.getY() + DETAIL_HEIGHT - 5);
-                g.setColor(Color.BLACK);
-            }else{
-                repaint();
-            }
+            mouseClick = e.getPoint();
+            searchForHighlight();
+            repaint();
+            detailPane.updateFields();
         }
         public void mouseEntered(MouseEvent e){
         }
@@ -457,4 +506,76 @@ public class BarChart extends JPanel{
             innerPane.updatePane();
         }
     }//CommandPane
+    private class DetailPane extends JPanel{
+        private JPanel pane;
+        private JLabel dateLabel;
+        private JLabel dateField;
+        private JLabel typeLabel;
+        private JLabel typeField;
+        private JLabel totalAmountLabel;
+        private JLabel totalAmountField;
+
+        private DetailPane(){
+            super();
+            setBorder(new TitledBorder("DetailPane"));
+            initLabels();
+            initFields();
+            initLayout();
+        }
+        private void initLabels(){
+            dateLabel = new JLabel("Date: ");
+            typeLabel = new JLabel("Type: ");
+            totalAmountLabel = new JLabel("Total Amount: ");
+        }
+        private void initFields(){
+            dateField = new JLabel("");
+            typeField = new JLabel("");
+            totalAmountField = new JLabel("");
+        }
+        private void initLayout(){
+            pane = new JPanel();
+            GroupLayout layout = new GroupLayout(pane);
+            pane.setLayout(layout);
+            layout.setAutoCreateContainerGaps(true);
+            layout.setAutoCreateGaps(true);
+            layout.setHorizontalGroup(layout.createSequentialGroup()
+                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                    .addComponent(dateLabel)
+                    .addComponent(typeLabel)
+                    .addComponent(totalAmountLabel))
+                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.TRAILING)
+                    .addComponent(dateField)
+                    .addComponent(typeField)
+                    .addComponent(totalAmountField)));
+            layout.setVerticalGroup(layout.createSequentialGroup()
+                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(dateLabel)
+                    .addComponent(dateField))
+                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(typeLabel)
+                    .addComponent(typeField))
+                    .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(totalAmountLabel)
+                    .addComponent(totalAmountField)));
+            add(pane);
+        }
+        private void updateFields(){
+            if(innerPane.dayReportIndex != -1){
+                dateField.setText(innerPane.dayList.get(innerPane.dayReportIndex));
+                double total;
+                if(innerPane.inOrOut.equals(Transaction.IN)){
+                    typeField.setText("Income");
+                    total = innerPane.dayRep.get(innerPane.dayReportIndex).getIncome();
+                }else{
+                    typeField.setText("Outcome");
+                    total = innerPane.dayRep.get(innerPane.dayReportIndex).getOutcome();
+                }
+                totalAmountField.setText("" + total);
+            }else{
+                dateField.setText("");
+                typeField.setText("");
+                totalAmountField.setText("");
+            }
+        }
+    }
 }//BarChart

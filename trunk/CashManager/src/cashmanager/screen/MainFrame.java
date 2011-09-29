@@ -2,6 +2,7 @@
 package cashmanager.screen;
 
 import cashmanager.dialog.TransactionDialog;
+import cashmanager.graph.ChartDialog;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -47,6 +48,14 @@ public class MainFrame extends JFrame{
             }
         });
         toolBar.add(c);
+        JButton d = new JButton("Graph");
+        d.addActionListener(new ActionListener() {
+
+            public void actionPerformed(ActionEvent e){
+                ChartDialog c = new ChartDialog();
+            }
+        });
+        toolBar.add(d);
     }//initToolBar
     public static void main(String args[]){
         MainFrame m = new MainFrame();

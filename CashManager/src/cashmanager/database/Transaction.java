@@ -166,49 +166,6 @@ public class Transaction extends CashManagerDB{
             disconnect(conn);
         }//finally
     }
-    public static void insertTransactions2(List<Transaction> list){
-        String ins = insertInto;
-        for(int i = 1; i < list.size(); i++){
-            ins += "(?, ?, ?, ?, ?), ";
-        }
-        ins += "(?, ?, ?, ?, ?)";
-        Connection conn = getConnection();
-        PreparedStatement ps = null;
-        int index = 1;
-        try{
-            ps = conn.prepareStatement(ins);
-            for(Transaction trans : list){
-                ps.setString(index, trans.getCausal());
-                index++;
-                ps.setDouble(index, trans.getAmount());
-                index++;
-                ps.setDate(index, new Date(trans.getTransactionDate().getTimeInMillis()));
-                index++;
-                ps.setString(index, trans.getDescription());
-                index++;
-                ps.setString(index, trans.getType());
-                index++;
-            }
-            ps.executeUpdate();
-            
-        }catch(SQLException ex){
-            System.err.println(ex.getMessage());
-            ex.printStackTrace();
-        }
-
-        finally{
-            try{
-                if(ps != null){
-                    ps.close();
-                }
-                disconnect(conn);
-            }catch(SQLException ex){
-                System.err.println(ex.getMessage());
-                ex.printStackTrace();
-            }
-        }//finally
-
-    }//insertTransactions
     public static List<Transaction> getAllTransaction(){
         Connection conn = getConnection();
         Statement s = null;

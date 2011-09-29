@@ -128,6 +128,7 @@ public class BalanceChart extends JPanel{
 
         private InnerPane(){
             super();
+            setBorder(new TitledBorder("BalanceChart"));
             initDates();
             updateFields();
             addMouseListener(this);

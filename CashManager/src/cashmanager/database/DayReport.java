@@ -413,6 +413,23 @@ public class DayReport extends CashManagerDB{
             insertDayReport(conn, dr);
         }
     }//updateOrInsert
+    public static String createBackUpString(){
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        List<DayReport> reps = getAllDayReport();
+        String backUp = createTab + "\n" + insertInto;
+        for(int i = 0; i < reps.size(); i++){
+            DayReport d = reps.get(i);
+            backUp += "(";
+            backUp += "DATE('" + df.format(d.getTime()) + "'), ";
+            backUp += d.getIncome() + ", ";
+            backUp += d.getOutcome() + ")";
+            if(i < reps.size() - 1){
+                backUp += ", ";
+            }
+        }
+        System.out.println(backUp);
+        return backUp;
+    }//createBackUpString
     public static void main(String args[]){
         Scanner scan = new Scanner(System.in);
         System.out.print("Delete table? y/n ");
@@ -424,7 +441,7 @@ public class DayReport extends CashManagerDB{
         Connection conn = getConnection();
         try{
             conn.setAutoCommit(false);
-            System.out.println("Enter 1 to continue or exit to quit.");
+            System.out.println("Enter 1 to continue or exit to exit.");
             String s = scan.nextLine();
             while(!s.equals("exit")){
                 DayReport dr = new DayReport();
@@ -440,7 +457,7 @@ public class DayReport extends CashManagerDB{
                 System.out.print("Insert the outcome: ");
                 dr.setOutcome(Double.parseDouble(scan.nextLine()));
                 DayReport.insertDayReport(conn, dr);
-                System.out.println("Enter 1 to continue or exit to quit.");
+                System.out.println("Enter 1 to continue or exit to exit.");
                 s = scan.nextLine();
             }
             conn.commit();

@@ -305,6 +305,25 @@ public class Transaction extends CashManagerDB{
     public static List<CausalAmount> getCausalTotalOutcome(Calendar fromDate, Calendar toDate){
         return getCausalAmount(fromDate, toDate, false);
     }//getCausalTotalOutcome
+    public static String createBackUpString(){
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        String backUp = createTab + "\n" + insertInto;
+        List<Transaction> trans = getAllTransaction();
+        for(int i = 0; i < trans.size(); i++){
+            Transaction t = trans.get(i);
+            backUp += "(";
+            backUp += "'" + t.getCausal() + "', ";
+            backUp += t.getAmount() + ", ";
+            backUp += "DATE('" + df.format(t.getTransactionDate().getTime()) + "'), ";
+            backUp += "'" + t.getDescription() + "', ";
+            backUp += "'" + t.getType() + "')";
+            if(i < trans.size() - 1){
+                backUp += ", ";
+            }
+        }
+        System.out.println(backUp);
+        return backUp;
+    }//createBackUpString
     public static void main(String args[]){
         Scanner s = new Scanner(System.in);
         System.out.print("Delete table? y/n ");
@@ -344,6 +363,7 @@ public class Transaction extends CashManagerDB{
         Transaction.insertTransactions(list);
 
         Transaction.printTransactionList(Transaction.getAllTransaction());
+        Transaction.createBackUpString();
         Transaction.shutdown();
         System.out.println("Main finisched.");
     }//main

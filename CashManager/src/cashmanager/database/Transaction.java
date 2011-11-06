@@ -150,7 +150,7 @@ public class Transaction extends CashManagerDB{
         
 
     }//insertTransaction
-    public static void insertTransactions(List<Transaction> transactionList){
+    public static void insertTransactions1(List<Transaction> transactionList){
         Connection conn = getConnection();
         try{
             conn.setAutoCommit(false);
@@ -158,6 +158,21 @@ public class Transaction extends CashManagerDB{
                 Transaction.insertTransaction(conn, trans);
             }
             conn.commit();
+        }catch(SQLException ex){
+            System.err.println(ex.getMessage());
+            ex.printStackTrace();
+        }
+        finally{
+            disconnect(conn);
+        }//finally
+    }
+    public static void insertTransactions(List<Transaction> transactionList){
+        Connection conn = getConnection();
+        Statement s = null;
+        String ins = createInsertIntoString(transactionList);
+        try{
+            s = conn.createStatement();
+            s.executeUpdate(ins);
         }catch(SQLException ex){
             System.err.println(ex.getMessage());
             ex.printStackTrace();
@@ -305,22 +320,28 @@ public class Transaction extends CashManagerDB{
     public static List<CausalAmount> getCausalTotalOutcome(Calendar fromDate, Calendar toDate){
         return getCausalAmount(fromDate, toDate, false);
     }//getCausalTotalOutcome
-    public static String createBackUpString(){
+    private static String createInsertIntoString(List<Transaction> trans){
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-        String backUp = createTab + "\n" + insertInto;
-        List<Transaction> trans = getAllTransaction();
+        String ins = insertInto;
         for(int i = 0; i < trans.size(); i++){
             Transaction t = trans.get(i);
-            backUp += "(";
-            backUp += "'" + t.getCausal() + "', ";
-            backUp += t.getAmount() + ", ";
-            backUp += "DATE('" + df.format(t.getTransactionDate().getTime()) + "'), ";
-            backUp += "'" + t.getDescription() + "', ";
-            backUp += "'" + t.getType() + "')";
+            ins += "(";
+            ins += "'" + t.getCausal() + "', ";
+            ins += t.getAmount() + ", ";
+            ins += "DATE('" + df.format(t.getTransactionDate().getTime()) + "'), ";
+            ins += "'" + t.getDescription() + "', ";
+            ins += "'" + t.getType() + "')";
             if(i < trans.size() - 1){
-                backUp += ", ";
+                ins += ", ";
             }
         }
+        return ins;
+    }
+    public static String createBackUpString(){
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        String backUp = createTab + "\n";
+        List<Transaction> trans = getAllTransaction();
+        backUp += createInsertIntoString(trans);
         System.out.println(backUp);
         return backUp;
     }//createBackUpString

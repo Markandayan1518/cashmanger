@@ -16,6 +16,8 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -98,6 +100,28 @@ public class Transaction extends CashManagerDB{
         String tmpDate = df.format(getTransactionDate().getTime());
         return String.format("Transaction [id=%d, causal=%s, amount=%f, date=%s, description=%s, type=%s] ",
                 getIdTrans(), getCausal(), getAmount(), tmpDate, getDescription(), getType());
+    }
+    public static boolean check4Table(){
+        try{
+            return check4Table(getConnection(), checkTab);
+        }catch(SQLException ex){
+            System.err.println(ex.getMessage());
+            ex.printStackTrace();
+        }
+        return false;
+    }
+    public static void createTable(){
+        createTable(checkTab, createTab);
+    }//createTable
+    public static void deleteTable(){
+        deleteTable(checkTab, createTab);
+    }//deleteTable
+    public static void dropTable(){
+        dropTable(checkTab, dropTable);
+    }//dropTable
+    public static void deleteNDrop(){
+        deleteTable();
+        dropTable();
     }
     public static void printTransactionList(List<Transaction> list){
         System.out.println("\n--------------------------------------------------");
@@ -409,7 +433,7 @@ public class Transaction extends CashManagerDB{
                 ins += "'" + t.getDescription() + "', ";
                 ins += "'" + t.getType() + "')";
                 if(i < trans.size() - 1){
-                    ins += ", ";
+                    ins += ",\n\t";
                 }
             }
             return ins;
@@ -418,8 +442,7 @@ public class Transaction extends CashManagerDB{
         }
     }
     public static String createBackUpString(){
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-        String backUp = createTab;
+        String backUp = createTab + "\n;\n";
         List<Transaction> trans = getAllTransaction();
         backUp += createInsertIntoString(trans, false);
         System.out.println(backUp);

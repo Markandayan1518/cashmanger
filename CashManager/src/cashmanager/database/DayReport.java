@@ -319,6 +319,28 @@ public class DayReport extends CashManagerDB{
         }
         return list;
     }//getDayBalanceBetween
+    public static boolean check4Table(){
+        try{
+            return check4Table(getConnection(), checkTab);
+        }catch(SQLException ex){
+            System.err.println(ex.getMessage());
+            ex.printStackTrace();
+        }
+        return false;
+    }
+    public static void createTable(){
+        createTable(checkTab, createTab);
+    }//createTable
+    public static void deleteTable(){
+        deleteTable(checkTab, createTab);
+    }//deleteTable
+    public static void dropTable(){
+        dropTable(checkTab, dropTable);
+    }//dropTable
+    public static void deleteNDrop(){
+        deleteTable();
+        dropTable();
+    }
     public static void insertDayReport(Connection conn, DayReport dayRep){
         PreparedStatement ps = null;
         String ins = insertInto;
@@ -413,21 +435,29 @@ public class DayReport extends CashManagerDB{
             insertDayReport(conn, dr);
         }
     }//updateOrInsert
+    private static String createInsertIntoString(List<DayReport> reps, boolean isBackup){
+        if(reps.size() > 0){
+            DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+            String ins = insertInto;
+            for(int i = 0; i < reps.size(); i++){
+                DayReport d = reps.get(i);
+                ins += "(";
+                ins += "DATE('" + df.format(d.getTime()) + "'), ";
+                ins += d.getIncome() + ", ";
+                ins += d.getOutcome() + ")";
+                if(i < reps.size() - 1){
+                    ins += ",\n\t";
+                }
+            }
+            return ins + "\n;\n";
+        }else{
+            return "";
+        }
+    }
     public static String createBackUpString(){
-//        DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-//        List<DayReport> reps = getAllDayReport();
-        String backUp = createTab;
-//        backUp += "\n" + insertInto;
-//        for(int i = 0; i < reps.size(); i++){
-//            DayReport d = reps.get(i);
-//            backUp += "(";
-//            backUp += "DATE('" + df.format(d.getTime()) + "'), ";
-//            backUp += d.getIncome() + ", ";
-//            backUp += d.getOutcome() + ")";
-//            if(i < reps.size() - 1){
-//                backUp += ", ";
-//            }
-//        }
+        String backUp = createTab + "\n;\n";
+        List<DayReport> reps = getAllDayReport();
+        backUp += createInsertIntoString(reps, true);
         System.out.println(backUp);
         return backUp;
     }//createBackUpString

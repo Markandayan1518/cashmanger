@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -26,7 +27,7 @@ public class BackupManager extends CashManagerDB{
 
     public static void createBackUpFile(){
         String backup = DayReport.createBackUpString();
-        backup += "\n\n" + Transaction.createBackUpString();
+        backup += Transaction.createBackUpString();
         try {
             PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(path)));
             out.write(backup);
@@ -47,13 +48,31 @@ public class BackupManager extends CashManagerDB{
         }catch(IOException ex){
             Logger.getLogger(DBManager.class.getName()).log(Level.SEVERE, null, ex);
         }
+        Transaction.deleteNDrop();
+        DayReport.deleteNDrop();
         Connection conn = getConnection();
+        Statement s = null;
+        String[] querys = sqlQuery.split(";");
         try{
-           if(Transaction.check4Table(conn, Transaction.checkTab)){
-
-           }
+//            conn.setAutcoCommit(false);
+            s = conn.createStatement();
+            for(String q : querys){
+                s.executeUpdate(q);
+                System.out.println(q);
+            }
+//            conn.commit();
         }catch(SQLException ex){
            Logger.getLogger(BackupManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        finally{
+            if(s != null){
+                try{
+                    s.close();
+                }catch(SQLException ex){
+                    Logger.getLogger(BackupManager.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            disconnect(conn);
         }
     }//restoreBackUpFile
 }//BackupManager

@@ -31,21 +31,24 @@ public class Transaction extends CashManagerDB{
     private String type;
     public static final String IN = "in";
     public static final String OUT = "out";
-    private static final String createTab = "create table transactions " +
-            "(idtrans bigint not null generated always as identity primary key, " +
-            "causal varchar(150) not null , " +
-            "amount double not null, " +
-            "transaction_date date not null, " +
-            "description varchar(500), " +
-            "type varchar(3) not null)";
-    private static final String deleteTab = "delete from transactions";
+    private static final String createTab = "create table transactions \n\t" +
+            "(idtrans bigint not null generated always as identity primary key, \n\t" +
+            "causal varchar(150) not null, \n\t" +
+            "amount double not null, \n\t" +
+            "transaction_date date not null, \n\t" +
+            "description varchar(500), \n\t" +
+            "type varchar(3) not null)\n";
+    private static final String deleteTab = "delete from transactions ";
     private static final String dropTable = "drop table transactions";
-    private static final String checkTab = "update transactions " +
+    public static final String checkTab = "update transactions " +
             "set description='test' " +
             "where 1=2";
-    private static final String insertInto = "insert into transactions" +
+    private static final String insertInto = "insert into transactions \n\t" +
                     "(causal, amount, transaction_date, description, type) " +
-                    "values ";
+                    "values \n\t";
+    private static final String insertIntoBackup = "insert into transactions \n\t" +
+                    "(idtrans, causal, amount, transaction_date, description, type) \n\t" +
+                    "values \n\t";
 
     public void setIdTrans(long id){
         idTrans = id;
@@ -91,7 +94,7 @@ public class Transaction extends CashManagerDB{
     }
     @Override
     public String toString(){
-        DateFormat df = DateFormat.getDateInstance();
+        DateFormat df = new SimpleDateFormat("dd-MM-yyyy");
         String tmpDate = df.format(getTransactionDate().getTime());
         return String.format("Transaction [id=%d, causal=%s, amount=%f, date=%s, description=%s, type=%s] ",
                 getIdTrans(), getCausal(), getAmount(), tmpDate, getDescription(), getType());
@@ -147,40 +150,115 @@ public class Transaction extends CashManagerDB{
                 ex.printStackTrace();
             }
         }//finally
-        
+
 
     }//insertTransaction
-    public static void insertTransactions1(List<Transaction> transactionList){
-        Connection conn = getConnection();
-        try{
-            conn.setAutoCommit(false);
-            for(Transaction trans : transactionList){
-                Transaction.insertTransaction(conn, trans);
-            }
-            conn.commit();
-        }catch(SQLException ex){
-            System.err.println(ex.getMessage());
-            ex.printStackTrace();
-        }
-        finally{
-            disconnect(conn);
-        }//finally
-    }
     public static void insertTransactions(List<Transaction> transactionList){
-        Connection conn = getConnection();
+        if(transactionList.size() > 0){
+            Connection conn = getConnection();
+            Statement s = null;
+            String ins = createInsertIntoString(transactionList, false);
+            List<DayReport> reps = createDayReportList(transactionList);
+            try{
+                s = conn.createStatement();
+                s.executeUpdate(ins);
+                for(DayReport d : reps){
+                    DayReport.updateOrInsert(conn, d);
+                }
+            }catch(SQLException ex){
+                System.err.println(ex.getMessage());
+                ex.printStackTrace();
+            }
+            finally{
+                disconnect(conn);
+            }//finally
+        }
+    }
+    public static void deleteTransaction(Connection conn, Transaction trans){
+        String deleteString = deleteTab;
+        deleteString += "where idtrans =" + trans.getIdTrans();
+        Transaction t = getTransactionByID(trans.getIdTrans());
         Statement s = null;
-        String ins = createInsertIntoString(transactionList);
         try{
             s = conn.createStatement();
-            s.executeUpdate(ins);
+            s.executeUpdate(deleteString);
+            DayReport d = new DayReport();
+            d.setDay(t.getTransactionDate());
+            if(isTransactionInOrOut(t)){
+                d.setIncome(-t.getAmount());
+            }else{
+                d.setOutcome(-t.getAmount());
+            }
+            DayReport.updateOrInsert(conn, d);
         }catch(SQLException ex){
+            System.err.println("SQLException thrown in class" + Transaction.class.getName());
             System.err.println(ex.getMessage());
             ex.printStackTrace();
         }
         finally{
-            disconnect(conn);
-        }//finally
+            try {
+                s.close();
+            } catch (SQLException ex) {
+                System.err.println("SQLException thrown in class" + Transaction.class.getName());
+                System.err.println(ex.getMessage());
+                ex.printStackTrace();
+            }
+        }
+    }//deleteTransaction
+    public static void deleteTransactions(List<Transaction> transactionList){
+        Connection conn = getConnection();
+        for(Transaction t : transactionList){
+            deleteTransaction(conn, t);
+        }
+        disconnect(conn);
+    }//deleteTransactions
+    public static Transaction getTransactionByID(long id){
+        Connection conn = getConnection();
+        Statement s = null;
+        ResultSet r = null;
+        Transaction t = new Transaction();
+        try{
+            s = conn.createStatement();
+            r = s.executeQuery("select * from transactions where idtrans = " + id);
+            while(r.next()){
+                t.setIdTrans(id);
+                t.setCausal(r.getString("causal"));
+                t.setAmount(r.getDouble("amount"));
+                t.setType(r.getString("type"));
+                t.setDescription(r.getString("description"));
+                t.setTransactionDate(r.getDate("transaction_date").getTime());
+            }
+        }catch(SQLException ex){
+            System.err.println("SQLException thrown in class" + Transaction.class.getName());
+            System.err.println(ex.getMessage());
+            ex.printStackTrace();
+        }
+        finally{
+            try {
+                r.close();
+                s.close();
+            } catch (SQLException ex) {
+                System.err.println("SQLException thrown in class" + Transaction.class.getName());
+                System.err.println(ex.getMessage());
+                ex.printStackTrace();
+            }
+        }
+        return t;
     }
+    private static List<DayReport> createDayReportList(List<Transaction> trans){
+        List<DayReport> reps = new ArrayList<DayReport>();
+        for(Transaction t : trans){
+            DayReport d = new DayReport();
+            d.setDay(t.getTransactionDate());
+            if(isTransactionInOrOut(t)){
+                d.setIncome(t.getAmount());
+            }else{
+                d.setOutcome(t.getAmount());
+            }
+            reps.add(d);
+        }
+        return reps;
+    }//createDayReportList
     public static List<Transaction> getAllTransaction(){
         Connection conn = getConnection();
         Statement s = null;
@@ -236,9 +314,6 @@ public class Transaction extends CashManagerDB{
             while(rs.next()){
                 arr.add(rs.getString(1));
             }
-            rs.close();
-            s.close();
-            disconnect(conn);
         }catch(SQLException ex){
             System.err.println("SQLException thrown in class" + Transaction.class.getName());
             System.err.println(ex.getMessage());
@@ -320,40 +395,91 @@ public class Transaction extends CashManagerDB{
     public static List<CausalAmount> getCausalTotalOutcome(Calendar fromDate, Calendar toDate){
         return getCausalAmount(fromDate, toDate, false);
     }//getCausalTotalOutcome
-    private static String createInsertIntoString(List<Transaction> trans){
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-        String ins = insertInto;
-        for(int i = 0; i < trans.size(); i++){
-            Transaction t = trans.get(i);
-            ins += "(";
-            ins += "'" + t.getCausal() + "', ";
-            ins += t.getAmount() + ", ";
-            ins += "DATE('" + df.format(t.getTransactionDate().getTime()) + "'), ";
-            ins += "'" + t.getDescription() + "', ";
-            ins += "'" + t.getType() + "')";
-            if(i < trans.size() - 1){
-                ins += ", ";
+    private static String createInsertIntoString(List<Transaction> trans, boolean isBackup){
+        if(trans.size() > 0){
+            DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+            String ins = isBackup ? insertIntoBackup : insertInto;
+            for(int i = 0; i < trans.size(); i++){
+                Transaction t = trans.get(i);
+                ins += "(";
+                ins += isBackup ? "" + t.getIdTrans() + ", " : "";
+                ins += "'" + t.getCausal() + "', ";
+                ins += t.getAmount() + ", ";
+                ins += "DATE('" + df.format(t.getTransactionDate().getTime()) + "'), ";
+                ins += "'" + t.getDescription() + "', ";
+                ins += "'" + t.getType() + "')";
+                if(i < trans.size() - 1){
+                    ins += ", ";
+                }
             }
+            return ins;
+        }else{
+            return "";
         }
-        return ins;
     }
     public static String createBackUpString(){
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-        String backUp = createTab + "\n";
+        String backUp = createTab;
         List<Transaction> trans = getAllTransaction();
-        backUp += createInsertIntoString(trans);
+        backUp += createInsertIntoString(trans, false);
         System.out.println(backUp);
         return backUp;
     }//createBackUpString
-    public static void main(String args[]){
+    public static void displayMenu(){
         Scanner s = new Scanner(System.in);
-        System.out.print("Delete table? y/n ");
-        if(s.nextLine().equals("y")){
-            Transaction.deleteTable(checkTab, deleteTab);
+        while(true){
+            System.out.println("Transaction Menu:");
+            System.out.println("Press 1 to insert new transactions");
+            System.out.println("Press 2 to delete transactions");
+            System.out.println("Press 3 to print all transactions");
+            System.out.println("Press 4 to delete all transactions");
+            System.out.println("Press 5 to drop transaction table");
+            System.out.println("Press 6 to create transaction table");
+            System.out.println("Press 0 to exit...");
+            System.out.print(">");
+            int selection = Integer.parseInt(s.next());
+            switch(selection){
+                case 1:
+                    Transaction.insertTransactionsCLI();
+                    break;
+                case 2:
+                    Transaction.deleteTransactionsCLI();
+                    break;
+                case 3:
+                    Transaction.printTransactionList(getAllTransaction());
+                    break;
+                case 4:
+                    Transaction.deleteTransactions(getAllTransaction());
+                    break;
+                case 5:
+                    Transaction.dropTable(checkTab, dropTable);
+                    break;
+                case 6:
+                    Transaction.createTable(checkTab, createTab);
+                    break;
+                case 0:
+                    return;
+                default:
+                    break;
+            }
         }
-//        Transaction.dropTable(checkTab, dropTable);
-        Transaction.createTable(checkTab, createTab);
-        System.out.print("Insert a new transaction causal or exit to quit: ");
+    }//displayMenu
+    public static void deleteTransactionsCLI(){
+        Scanner s = new Scanner(System.in);
+        List<Transaction> list = new ArrayList<Transaction>();
+        System.out.print("Insert a new transaction ID or -1 to exit: ");
+        long id = Long.parseLong(s.next());
+        if(id != -1){
+            Transaction t = new Transaction();
+            t.setIdTrans(id);
+            list.add(t);
+            deleteTransactions(list);
+            System.out.println("Deleted transaction with id = " + id);
+        }
+    }//deleteransactionsCLI
+    public static void insertTransactionsCLI(){
+        Scanner s = new Scanner(System.in);
+        System.out.print("Insert a new transaction causal or exit to exit: ");
         String tmp = s.nextLine();
         List<Transaction> list = new ArrayList<Transaction>();
         while(!tmp.equals("exit")){
@@ -376,17 +502,22 @@ public class Transaction extends CashManagerDB{
 
             list.add(t);
 
-            System.out.print("Insert a new transaction or exit to quit: ");
+            System.out.print("Insert a new transaction or exit to exit: ");
             tmp = s.nextLine();
         }
-        System.out.println("Done inserting.");
-
         Transaction.insertTransactions(list);
-
-        Transaction.printTransactionList(Transaction.getAllTransaction());
-        Transaction.createBackUpString();
-        Transaction.shutdown();
-        System.out.println("Main finisched.");
+        System.out.println("Done inserting.");
+    }//insertTransactionsCLI
+    public static void main(String args[]){
+        try{
+            displayMenu();
+//            Transaction.printTransactionList(Transaction.getAllTransaction());
+//            Transaction.createBackUpString();
+//            System.out.println("Main finisched.");
+        }catch(Exception ex){}
+        finally{
+            Transaction.shutdown();
+        }
     }//main
 
 }//Transaction

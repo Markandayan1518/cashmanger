@@ -25,15 +25,15 @@ public class DayReport extends CashManagerDB{
     private double income;
     private double outcome;
 
-    private static final String createTab = "create table dayReport " +
-            "(day date not null primary key, " +
-            "income double default 0, " +
-            "outcome double default 0)";
+    private static final String createTab = "create table dayReport \n\t" +
+            "(day date not null primary key, \n\t" +
+            "income double default 0, \n\t" +
+            "outcome double default 0)\n";
     private static final String deleteTab = "delete from dayReport";
     private static final String dropTable = "drop table dayReport";
     private static final String checkTab = "select * from dayReport";
-    private static final String insertInto = "insert into dayReport " +
-                    "(day, income, outcome) values ";
+    private static final String insertInto = "insert into dayReport \n\t" +
+                    "(day, income, outcome) values \n\t";
     private static String updateRow = "update dayReport "
             + "set income = income + ?, outcome = outcome + ? where day = ?";
 
@@ -176,7 +176,7 @@ public class DayReport extends CashManagerDB{
             System.err.println(ex.getMessage());
             ex.printStackTrace();
         }
-        
+
         finally{
             try{
                 if(rs != null){
@@ -215,7 +215,7 @@ public class DayReport extends CashManagerDB{
             System.err.println(ex.getMessage());
             ex.printStackTrace();
         }
-        
+
         finally{
             try{
                 if(rs != null){
@@ -369,7 +369,7 @@ public class DayReport extends CashManagerDB{
             System.err.println(ex.getMessage());
             ex.printStackTrace();
         }
-        
+
         finally{
             try{
                 if(ps != null){
@@ -414,22 +414,54 @@ public class DayReport extends CashManagerDB{
         }
     }//updateOrInsert
     public static String createBackUpString(){
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-        List<DayReport> reps = getAllDayReport();
-        String backUp = createTab + "\n" + insertInto;
-        for(int i = 0; i < reps.size(); i++){
-            DayReport d = reps.get(i);
-            backUp += "(";
-            backUp += "DATE('" + df.format(d.getTime()) + "'), ";
-            backUp += d.getIncome() + ", ";
-            backUp += d.getOutcome() + ")";
-            if(i < reps.size() - 1){
-                backUp += ", ";
-            }
-        }
+//        DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+//        List<DayReport> reps = getAllDayReport();
+        String backUp = createTab;
+//        backUp += "\n" + insertInto;
+//        for(int i = 0; i < reps.size(); i++){
+//            DayReport d = reps.get(i);
+//            backUp += "(";
+//            backUp += "DATE('" + df.format(d.getTime()) + "'), ";
+//            backUp += d.getIncome() + ", ";
+//            backUp += d.getOutcome() + ")";
+//            if(i < reps.size() - 1){
+//                backUp += ", ";
+//            }
+//        }
         System.out.println(backUp);
         return backUp;
     }//createBackUpString
+    public static void displayMenu(){
+        Scanner s = new Scanner(System.in);
+        while(true){
+            System.out.println("DayReport Menu:");
+            System.out.println("Press 1 to print all day reports");
+            System.out.println("Press 2 to delete all day reports");
+            System.out.println("Press 3 to drop dayreport table");
+            System.out.println("Press 4 to create dayreport table");
+            System.out.println("Press 0 to exit...");
+            System.out.print(">");
+            int selection = Integer.parseInt(s.next());
+            switch(selection){
+                case 1:
+                    printDayReportList(getAllDayReport());
+                    break;
+                case 2:
+                    DayReport.deleteTable(checkTab, deleteTab);
+                    break;
+                case 3:
+                    DayReport.dropTable(checkTab, dropTable);
+                    break;
+                case 4:
+                    DayReport.createTable(checkTab, createTab);
+                    break;
+                case 0:
+                    return;
+                default:
+                    break;
+            }
+        }
+    }//displayMenu
     public static void main(String args[]){
         Scanner scan = new Scanner(System.in);
         System.out.print("Delete table? y/n ");

@@ -20,6 +20,7 @@ public class DBManager {
             System.out.println("Press 1 to enter Transaction Menu");
             System.out.println("Press 2 to enter DayReport Menu");
             System.out.println("Press 3 to create a Backup file");
+            System.out.println("Press 4 to restore a Backup file");
             System.out.println("Press 0 to exit");
             System.out.print(">");
             int selection = Integer.parseInt(s.next());
@@ -32,6 +33,9 @@ public class DBManager {
                     break;
                 case 3:
                     BackupManager.createBackUpFile();
+                    break;
+                case 4:
+                    BackupManager.restoreBackUpFile();
                     break;
                 case 0:
                     return;

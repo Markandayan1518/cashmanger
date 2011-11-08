@@ -10,7 +10,7 @@ import java.sql.Statement;
  *
  * @author Alan Bertoni
  */
-public class CashManagerDB {
+public abstract class CashManagerDB {
 
     private static final String driver = "org.apache.derby.jdbc.EmbeddedDriver";
     private static final String database = "cashManagerDB";
@@ -38,7 +38,6 @@ public class CashManagerDB {
         }
         return c;
     }//getConnection
-
     protected static void disconnect(Connection conn){
         try{
             conn.close();
@@ -48,7 +47,6 @@ public class CashManagerDB {
             ex.printStackTrace();
         }
     }//disconnect
-
     protected static void shutdown(){
         //   ## DATABASE SHUTDOWN SECTION ##
         /*** In embedded mode, an application should shut down Derby.
@@ -69,7 +67,6 @@ public class CashManagerDB {
             }
         }
     }//shutdown
-
     protected static boolean check4Table(Connection conn, String update) throws SQLException {
       Statement s = null;
       try{
@@ -97,8 +94,7 @@ public class CashManagerDB {
       //  System.out.println("Just got the warning - table exists OK ");
       return true;
    }//check4Table
-
-    public static void createTable(String checkTab, String createTab){
+    protected static void createTable(String checkTab, String createTab){
         Connection conn = getConnection();
         Statement s = null;
         try{
@@ -125,8 +121,7 @@ public class CashManagerDB {
             }
         }
     }//createTable
-
-    public static void deleteTable(String checkTab, String deleteTab){
+    protected static void deleteTable(String checkTab, String deleteTab){
         Connection conn = getConnection();
         Statement s = null;
         try {
@@ -152,8 +147,7 @@ public class CashManagerDB {
             }
         }
     }//deleteTable
-
-    public static void dropTable(String checkTab, String dropTab){
+    protected static void dropTable(String checkTab, String dropTab){
         Connection conn = getConnection();
         Statement s = null;
         try {
@@ -179,4 +173,5 @@ public class CashManagerDB {
             }
         }
     }//dropTable
+    
 }//CashManagerDB
